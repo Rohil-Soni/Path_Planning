@@ -31,7 +31,7 @@ int main()
 
     for(int dist: result)
     {
-        cout<<dist<<" ";
+        cout<<dist<<" ";    
     }
     return 0;
 }
