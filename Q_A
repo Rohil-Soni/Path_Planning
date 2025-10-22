@@ -1,0 +1,12 @@
+what is vector???
+A vector is like a list that can automatically get bigger.You don't have to say how big it will be at the start.You can just keep adding things to it, and it manages the memory for you.It's also stored in a way that makes it fast to access any item in the list.
+
+3d vector m kya hota hai??
+har vector k 2 aur vector hota hai.
+
+***esse hi 2D vector ko matrix bolte hai 
+***esse hi 3d vector ko data structure bol sakte hai 
+
+what is a range based loop?
+Instead of writing a traditional loop where you track positions and worry about the size, a range-based loop automatically visits each element one by one.
+
