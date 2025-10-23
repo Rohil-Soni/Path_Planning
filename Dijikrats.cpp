@@ -5,7 +5,7 @@
 using namespace std;
 
 //function to construct adjacency list
-vector<vector<vector<int>>> constructadj(vector<vector<int>>& edges, int n) // Function to construct adjacency list
+vector<vector<vector<int>>> constructadj(vector<vector<int>>&edges, int v) // Function to construct adjacency list
 {
     vector<vector<vector<int>>> adj(v); // Adjacency list representation
 
@@ -37,8 +37,21 @@ vector<int> dijkstra(int V, vector<vector<int>> &edges, int src)
         pq.pop();
 
         //get all adjacent vertices of u
-         
+        for(auto x : adj[u]){
+            //get vertex label and weight of current adjacent of u
+            int v = x[0];
+            int weight = x[1];
+
+            //if there is a shorter path to v through u.
+            if(dist[v] > dist[u] + weight)
+            {
+                //updating distance of v
+                dist[v] = dist[u] + weight;
+                pq.push({dist[v],v}); // Push updated distance to priority queue
+            }
+        }
     }
+    return dist; // Return the distance array
 }
 
 int main()
@@ -46,7 +59,7 @@ int main()
     int v =5;
     int src = 0 ;
 
-    vector<vector<int>> edge = {{0, 1, 4}, {0, 2, 8}, {1, 4, 6}, {2, 3, 2}, {3, 4, 10}};
+    vector<vector<int>> edges = {{0, 1, 4}, {0, 2, 8}, {1, 4, 6}, {2, 3, 2}, {3, 4, 10}};
 
     vector<int> result = dijkstra(v, edges, src);
 
