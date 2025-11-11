@@ -5,18 +5,18 @@
 using namespace std;
 
 //function to construct adjacency list
-vector<vector<vector<int>>> constructadj(vector<vector<int>>&edges, int v) // Function to construct adjacency list
+vector<vector<vector<int>>> constructadj(vector<vector<int>>& edges, int n) // Function to construct adjacency list
 {
-    vector<vector<vector<int>>> adj(v); // Adjacency list representation
+    vector<vector<vector<int>>> adj(n); // Adjacency list representation
 
-    //adj[u] = list of {v, weight}
-    for(const auto &edge: edges) //for loop for each edge in each direction
+    // adj[u] = list of {v, weight}
+    for (const auto &edge : edges) // iterate each edge
     {
-        int u = edge[0];// u = starting node
-        int V = edge[1];// v = ending node
-        int wt = edge[2];// wt = weight of the edge
-        adj[u].push_back({v, wt}); // Add edge from u to v with weight wt
-        adj[v].push_back({u, wt}); // Add edge from v to u with weight wt (for undirected graph)
+        int u = edge[0]; // start node
+        int v = edge[1]; // end node (fixed: use lowercase v for neighbor)
+        int wt = edge[2]; // weight
+        adj[u].push_back({v, wt}); // Add edge u -> v
+        adj[v].push_back({u, wt}); // Add edge v -> u (undirected)
     }
     return adj; // Return the constructed adjacency list
 }
