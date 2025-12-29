@@ -229,7 +229,7 @@ def run_comparison():
     Run Dijkstra's algorithm on user-inputted graphs and display results
     """
     print("\n" + "=" * 100)
-    print("DIJKSTRA'S ALGORITHM - PATHFINDING ANALYSIS")
+    print("DIJKSTRA'S ALGORITHM - PATH FINDING ANALYSIS")
     print("=" * 100)
     
     num_graphs = int(input("\nHow many graphs do you want to test? "))
