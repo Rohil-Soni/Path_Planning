@@ -108,34 +108,7 @@ class DijkstraPathfinder:
         return path
 
 
-def display_grid(rows, cols, start, goal, obstacles, path=None):
-    """
-    Visual representation of the grid
-    """
-    print("\nGRID VISUALIZATION:")
-    print("=" * (cols * 4 + 1))
-    
-    for i in range(rows):
-        row_str = ""
-        for j in range(cols):
-            cell = (i, j)
-            if cell == start:
-                row_str += " S "
-            elif cell == goal:
-                row_str += " G "
-            elif cell in obstacles:
-                row_str += " ■ "
-            elif path and cell in path:
-                row_str += " * "
-            else:
-                row_str += " . "
-            row_str += "|" if j < cols - 1 else ""
-        print(row_str)
-        if i < rows - 1:
-            print("-" * (cols * 4 + 1))
-    
-    print("=" * (cols * 4 + 1))
-    print("Legend: S=Start, G=Goal, ■=Obstacle, *=Path, .=Empty")
+
 
 
 def run_dijkstra_analysis():
@@ -143,7 +116,7 @@ def run_dijkstra_analysis():
     Main function to run Dijkstra's algorithm with user input
     """
     print("\n" + "=" * 80)
-    print("DIJKSTRA'S ALGORITHM - PATH FINDING RESEARCH ANALYSIS")
+    print("DIJKSTRA'S ALGORITHM - PATHFINDING RESEARCH ANALYSIS")
     print("=" * 80)
     print("Unit Cost: 1 (fixed for all movements)")
     print("Movement: 4-directional (up, down, left, right)")
@@ -216,9 +189,6 @@ def run_dijkstra_analysis():
         except:
             print("  ✗ Invalid format! Use: row,col")
     
-    # Display initial grid
-    display_grid(rows, cols, start, goal, obstacles)
-    
     # Run Dijkstra's algorithm
     print("\n\n" + "=" * 80)
     print("RUNNING DIJKSTRA'S ALGORITHM...")
@@ -251,9 +221,6 @@ def run_dijkstra_analysis():
             first_5 = ' → '.join([f'({x},{y})' for x, y in result['path'][:5]])
             last_5 = ' → '.join([f'({x},{y})' for x, y in result['path'][-5:]])
             print(f"{first_5} ... {last_5}")
-        
-        # Display grid with path
-        display_grid(rows, cols, start, goal, obstacles, result['path'])
         
     else:
         print("\n✗ NO PATH FOUND!")
@@ -329,8 +296,6 @@ def run_example_scenarios():
         print(f"Start: {start}")
         print(f"Goal: {goal}")
         
-        display_grid(rows, cols, start, goal, obstacles)
-        
         print("\nRunning Dijkstra's Algorithm...")
         pathfinder = DijkstraPathfinder(scenario['grid'], scenario['obstacles'])
         result = pathfinder.dijkstra(scenario['start'], scenario['goal'])
@@ -341,9 +306,12 @@ def run_example_scenarios():
         print(f"\na) Total Time Taken:           {result['execution_time_ms']:.6f} ms")
         print(f"b) Nodes/Cells Explored:       {result['nodes_explored']} nodes")
         print(f"c) Nodes in Final Path:        {result['path_length']} nodes")
+        print()
         
         if result['success']:
-            display_grid(rows, cols, start, goal, obstacles, result['path'])
+            print("✓ Path found successfully!")
+        else:
+            print("✗ No path exists between start and goal.")
         
     else:
         run_dijkstra_analysis()
