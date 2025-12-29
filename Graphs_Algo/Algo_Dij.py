@@ -116,7 +116,7 @@ def run_dijkstra_analysis():
     Main function to run Dijkstra's algorithm with user input
     """
     print("\n" + "=" * 80)
-    print("DIJKSTRA'S ALGORITHM - PATHFINDING RESEARCH ANALYSIS")
+    print("DIJKSTRA'S ALGORITHM - PATH FINDING RESEARCH ANALYSIS")
     print("=" * 80)
     print("Unit Cost: 1 (fixed for all movements)")
     print("Movement: 4-directional (up, down, left, right)")
@@ -240,94 +240,5 @@ def run_dijkstra_analysis():
         run_dijkstra_analysis()
 
 
-# Example scenarios for quick testing
-def run_example_scenarios():
-    """
-    Pre-defined example scenarios for quick testing
-    """
-    print("\n" + "=" * 80)
-    print("EXAMPLE SCENARIOS - DIJKSTRA'S ALGORITHM")
-    print("=" * 80)
-    
-    scenarios = [
-        {
-            'name': 'Simple 5x5 Grid - No Obstacles',
-            'grid': (5, 5),
-            'obstacles': [],
-            'start': (0, 0),
-            'goal': (4, 4)
-        },
-        {
-            'name': '10x10 Grid - With Obstacles',
-            'grid': (10, 10),
-            'obstacles': [(2, 2), (2, 3), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4)],
-            'start': (0, 0),
-            'goal': (9, 9)
-        },
-        {
-            'name': '8x8 Grid - Maze-like',
-            'grid': (8, 8),
-            'obstacles': [(1, 1), (1, 2), (1, 3), (3, 1), (3, 3), (5, 1), (5, 2), (5, 3), (5, 5)],
-            'start': (0, 0),
-            'goal': (7, 7)
-        }
-    ]
-    
-    print("\nAvailable scenarios:")
-    for i, scenario in enumerate(scenarios, 1):
-        print(f"{i}. {scenario['name']}")
-    print(f"{len(scenarios) + 1}. Custom input")
-    
-    choice = int(input("\nSelect scenario (1-4): "))
-    
-    if choice <= len(scenarios):
-        scenario = scenarios[choice - 1]
-        print(f"\n{'=' * 80}")
-        print(f"SCENARIO: {scenario['name']}")
-        print(f"{'=' * 80}")
-        
-        rows, cols = scenario['grid']
-        obstacles = scenario['obstacles']
-        start = scenario['start']
-        goal = scenario['goal']
-        
-        print(f"Grid: {rows} x {cols}")
-        print(f"Obstacles: {len(obstacles)}")
-        print(f"Start: {start}")
-        print(f"Goal: {goal}")
-        
-        print("\nRunning Dijkstra's Algorithm...")
-        pathfinder = DijkstraPathfinder(scenario['grid'], scenario['obstacles'])
-        result = pathfinder.dijkstra(scenario['start'], scenario['goal'])
-        
-        print("\n" + "=" * 80)
-        print("RESULTS")
-        print("=" * 80)
-        print(f"\na) Total Time Taken:           {result['execution_time_ms']:.6f} ms")
-        print(f"b) Nodes/Cells Explored:       {result['nodes_explored']} nodes")
-        print(f"c) Nodes in Final Path:        {result['path_length']} nodes")
-        print()
-        
-        if result['success']:
-            print("✓ Path found successfully!")
-        else:
-            print("✗ No path exists between start and goal.")
-        
-    else:
-        run_dijkstra_analysis()
-
-
 if __name__ == "__main__":
-    print("\n" + "=" * 80)
-    print("DIJKSTRA'S ALGORITHM - RESEARCH IMPLEMENTATION")
-    print("=" * 80)
-    print("\nChoose mode:")
-    print("1. Example scenarios (quick test)")
-    print("2. Custom input")
-    
-    mode = input("\nEnter choice (1 or 2): ").strip()
-    
-    if mode == '1':
-        run_example_scenarios()
-    else:
-        run_dijkstra_analysis()
+    run_dijkstra_analysis()
