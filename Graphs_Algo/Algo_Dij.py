@@ -143,7 +143,7 @@ def run_dijkstra_analysis():
     Main function to run Dijkstra's algorithm with user input
     """
     print("\n" + "=" * 80)
-    print("DIJKSTRA'S ALGORITHM - PATHFINDING RESEARCH ANALYSIS")
+    print("DIJKSTRA'S ALGORITHM - PATH FINDING RESEARCH ANALYSIS")
     print("=" * 80)
     print("Unit Cost: 1 (fixed for all movements)")
     print("Movement: 4-directional (up, down, left, right)")
