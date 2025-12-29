@@ -1,53 +1,44 @@
 import heapq
 import time
-from collections import defaultdict
-import math
 
-class GraphAlgorithms:
+class DijkstraPathfinder:
     """
-    Implementation of Dijkstra's algorithm with performance metrics
+    Dijkstra's Algorithm Implementation for Research Analysis
+    Unit cost: 1 for all paths
     """
     
-    def __init__(self, graph, graph_type='grid'):
+    def __init__(self, grid, obstacles):
         """
-        Initialize with a graph
-        graph_type: 'grid' for grid-based graphs with coordinates, 'weighted' for weighted graphs
+        Initialize with grid dimensions and obstacles
+        grid: (rows, cols) tuple
+        obstacles: list of (row, col) tuples representing blocked cells
         """
-        self.graph = graph
-        self.graph_type = graph_type
-        self.nodes_explored = 0
-        self.execution_time = 0
-        self.path_length = 0
-    
+        self.rows, self.cols = grid
+        self.obstacles = set(obstacles)
+        self.UNIT_COST = 1  # Fixed unit cost for all movements
+        
     def get_neighbors(self, node):
         """
-        Get neighbors of a node based on graph type
-        """
-        if self.graph_type == 'grid':
-            return self._get_grid_neighbors(node)
-        else:
-            return self.graph.get(node, [])
-    
-    def _get_grid_neighbors(self, node):
-        """
-        Get valid neighbors in a grid (4-directional movement)
+        Get valid neighbors (4-directional: up, down, left, right)
         """
         x, y = node
         neighbors = []
-        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # Right, Down, Left, Up
+        # 4-directional movement: Right, Down, Left, Up
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
-            if (nx, ny) in self.graph:
-                # Return as (neighbor, cost) tuple
-                neighbors.append(((nx, ny), self.graph[(nx, ny)]))
+            # Check if neighbor is within grid bounds and not an obstacle
+            if (0 <= nx < self.rows and 0 <= ny < self.cols and 
+                (nx, ny) not in self.obstacles):
+                neighbors.append((nx, ny))
         
         return neighbors
     
     def dijkstra(self, start, goal):
         """
-        Dijkstra's algorithm implementation
-        Returns: (path, nodes_explored, execution_time, path_length)
+        Dijkstra's algorithm with performance metrics
+        Returns: dictionary with path, metrics
         """
         start_time = time.time()
         
@@ -59,7 +50,7 @@ class GraphAlgorithms:
         parent = {start: None}
         # Track explored nodes
         explored = set()
-        nodes_explored_count = 0
+        nodes_explored = 0
         
         while pq:
             current_cost, current_node = heapq.heappop(pq)
@@ -69,23 +60,25 @@ class GraphAlgorithms:
                 continue
             
             explored.add(current_node)
-            nodes_explored_count += 1
+            nodes_explored += 1
             
             # Goal found
             if current_node == goal:
                 end_time = time.time()
                 path = self._reconstruct_path(parent, start, goal)
+                
                 return {
                     'path': path,
-                    'nodes_explored': nodes_explored_count,
-                    'execution_time': (end_time - start_time) * 1000,  # Convert to milliseconds
-                    'path_length': len(path)
+                    'nodes_explored': nodes_explored,
+                    'execution_time_ms': (end_time - start_time) * 1000,
+                    'path_length': len(path),
+                    'success': True
                 }
             
             # Explore neighbors
-            for neighbor, weight in self.get_neighbors(current_node):
+            for neighbor in self.get_neighbors(current_node):
                 if neighbor not in explored:
-                    new_cost = current_cost + weight
+                    new_cost = current_cost + self.UNIT_COST
                     
                     if neighbor not in distances or new_cost < distances[neighbor]:
                         distances[neighbor] = new_cost
@@ -96,14 +89,15 @@ class GraphAlgorithms:
         end_time = time.time()
         return {
             'path': [],
-            'nodes_explored': nodes_explored_count,
-            'execution_time': (end_time - start_time) * 1000,
-            'path_length': 0
+            'nodes_explored': nodes_explored,
+            'execution_time_ms': (end_time - start_time) * 1000,
+            'path_length': 0,
+            'success': False
         }
     
     def _reconstruct_path(self, parent, start, goal):
         """
-        Reconstruct path from start to goal using parent dictionary
+        Reconstruct path from start to goal
         """
         path = []
         current = goal
@@ -114,219 +108,258 @@ class GraphAlgorithms:
         return path
 
 
-def input_weighted_graph():
+def display_grid(rows, cols, start, goal, obstacles, path=None):
     """
-    Get weighted graph input from user
+    Visual representation of the grid
     """
-    print("\n" + "="*80)
-    print("WEIGHTED GRAPH INPUT")
-    print("="*80)
-    print("Enter graph as adjacency list.")
-    print("Format: node neighbor1,weight1 neighbor2,weight2 ...")
-    print("Example: A B,4 C,2")
-    print("Enter 'done' when finished.\n")
+    print("\nGRID VISUALIZATION:")
+    print("=" * (cols * 4 + 1))
     
-    graph = {}
-    while True:
-        line = input("Enter node and edges (or 'done'): ").strip()
-        if line.lower() == 'done':
-            break
-        
-        parts = line.split()
-        if len(parts) < 1:
-            continue
-        
-        node = parts[0]
-        neighbors = []
-        
-        for i in range(1, len(parts)):
-            try:
-                neighbor, weight = parts[i].split(',')
-                neighbors.append((neighbor, int(weight)))
-            except:
-                print(f"  ✗ Invalid format for '{parts[i]}'. Use format: neighbor,weight")
-        
-        graph[node] = neighbors
-        print(f"  ✓ Added node {node} with {len(neighbors)} connection(s)")
+    for i in range(rows):
+        row_str = ""
+        for j in range(cols):
+            cell = (i, j)
+            if cell == start:
+                row_str += " S "
+            elif cell == goal:
+                row_str += " G "
+            elif cell in obstacles:
+                row_str += " ■ "
+            elif path and cell in path:
+                row_str += " * "
+            else:
+                row_str += " . "
+            row_str += "|" if j < cols - 1 else ""
+        print(row_str)
+        if i < rows - 1:
+            print("-" * (cols * 4 + 1))
     
-    start = input("\nEnter start node: ").strip()
-    goal = input("Enter goal node: ").strip()
-    description = input("Enter graph description: ").strip()
-    
-    return graph, start, goal, description
+    print("=" * (cols * 4 + 1))
+    print("Legend: S=Start, G=Goal, ■=Obstacle, *=Path, .=Empty")
 
 
-def input_grid_graph():
+def run_dijkstra_analysis():
     """
-    Get grid graph input from user
+    Main function to run Dijkstra's algorithm with user input
     """
-    print("\n" + "="*80)
-    print("GRID GRAPH INPUT")
-    print("="*80)
+    print("\n" + "=" * 80)
+    print("DIJKSTRA'S ALGORITHM - PATHFINDING RESEARCH ANALYSIS")
+    print("=" * 80)
+    print("Unit Cost: 1 (fixed for all movements)")
+    print("Movement: 4-directional (up, down, left, right)")
+    print("=" * 80)
     
+    # Get grid dimensions
+    print("\n📐 GRID SETUP")
+    print("-" * 80)
     rows = int(input("Enter number of rows: "))
     cols = int(input("Enter number of columns: "))
+    print(f"✓ Grid size: {rows} x {cols} ({rows * cols} total cells)")
     
-    print("\nEnter default cost for cells (e.g., 1): ")
-    default_cost = int(input("Default cost: "))
+    # Get obstacles
+    print("\n🚧 OBSTACLES SETUP")
+    print("-" * 80)
+    print("Enter obstacles as 'row,col' (one per line)")
+    print("Type 'done' when finished")
+    print("Example: 1,2")
     
-    graph = {}
-    for i in range(rows):
-        for j in range(cols):
-            graph[(i, j)] = default_cost
+    obstacles = []
+    while True:
+        obstacle_input = input("Obstacle (or 'done'): ").strip()
+        if obstacle_input.lower() == 'done':
+            break
+        try:
+            r, c = map(int, obstacle_input.split(','))
+            if 0 <= r < rows and 0 <= c < cols:
+                obstacles.append((r, c))
+                print(f"  ✓ Added obstacle at ({r}, {c})")
+            else:
+                print(f"  ✗ Position ({r}, {c}) is out of bounds!")
+        except:
+            print("  ✗ Invalid format! Use: row,col")
     
-    print(f"\n✓ Created {rows}x{cols} grid with default cost {default_cost}")
+    print(f"\n✓ Total obstacles: {len(obstacles)}")
     
-    print("\nDo you want to add obstacles? (y/n): ")
-    if input().strip().lower() == 'y':
-        print("Enter obstacles as 'row,col' (one per line, 'done' to finish):")
-        while True:
-            obs_input = input("Obstacle: ").strip()
-            if obs_input.lower() == 'done':
-                break
-            try:
-                r, c = map(int, obs_input.split(','))
-                if (r, c) in graph:
-                    del graph[(r, c)]
-                    print(f"  ✓ Added obstacle at ({r}, {c})")
+    # Get start and goal
+    print("\n🎯 START & GOAL POSITIONS")
+    print("-" * 80)
+    
+    while True:
+        start_input = input("Enter start position (row,col): ").strip()
+        try:
+            sr, sc = map(int, start_input.split(','))
+            if 0 <= sr < rows and 0 <= sc < cols:
+                if (sr, sc) not in obstacles:
+                    start = (sr, sc)
+                    print(f"  ✓ Start: ({sr}, {sc})")
+                    break
                 else:
-                    print(f"  ✗ Position ({r}, {c}) is out of bounds")
-            except:
-                print("  ✗ Invalid format. Use: row,col")
+                    print("  ✗ Start position cannot be an obstacle!")
+            else:
+                print("  ✗ Position out of bounds!")
+        except:
+            print("  ✗ Invalid format! Use: row,col")
     
-    print("\nDo you want to add varying costs for specific cells? (y/n): ")
-    if input().strip().lower() == 'y':
-        print("Enter cell costs as 'row,col,cost' (one per line, 'done' to finish):")
-        while True:
-            cost_input = input("Cell cost: ").strip()
-            if cost_input.lower() == 'done':
-                break
-            try:
-                r, c, cost = map(int, cost_input.split(','))
-                if (r, c) in graph:
-                    graph[(r, c)] = cost
-                    print(f"  ✓ Set cost {cost} for cell ({r}, {c})")
+    while True:
+        goal_input = input("Enter goal position (row,col): ").strip()
+        try:
+            gr, gc = map(int, goal_input.split(','))
+            if 0 <= gr < rows and 0 <= gc < cols:
+                if (gr, gc) not in obstacles:
+                    goal = (gr, gc)
+                    print(f"  ✓ Goal: ({gr}, {gc})")
+                    break
                 else:
-                    print(f"  ✗ Position ({r}, {c}) is out of bounds or is an obstacle")
-            except:
-                print("  ✗ Invalid format. Use: row,col,cost")
+                    print("  ✗ Goal position cannot be an obstacle!")
+            else:
+                print("  ✗ Position out of bounds!")
+        except:
+            print("  ✗ Invalid format! Use: row,col")
     
-    print("\nEnter start position (row,col): ")
-    start_r, start_c = map(int, input().strip().split(','))
-    start = (start_r, start_c)
+    # Display initial grid
+    display_grid(rows, cols, start, goal, obstacles)
     
-    print("Enter goal position (row,col): ")
-    goal_r, goal_c = map(int, input().strip().split(','))
-    goal = (goal_r, goal_c)
+    # Run Dijkstra's algorithm
+    print("\n\n" + "=" * 80)
+    print("RUNNING DIJKSTRA'S ALGORITHM...")
+    print("=" * 80)
     
-    description = input("Enter graph description: ").strip()
+    pathfinder = DijkstraPathfinder((rows, cols), obstacles)
+    result = pathfinder.dijkstra(start, goal)
     
-    return graph, start, goal, description
-
-
-def run_comparison():
-    """
-    Run Dijkstra's algorithm on user-inputted graphs and display results
-    """
-    print("\n" + "=" * 100)
-    print("DIJKSTRA'S ALGORITHM - PATH FINDING ANALYSIS")
-    print("=" * 100)
+    # Display results
+    print("\n" + "=" * 80)
+    print("RESEARCH PARAMETERS - DIJKSTRA'S ALGORITHM RESULTS")
+    print("=" * 80)
     
-    num_graphs = int(input("\nHow many graphs do you want to test? "))
-    
-    graphs = []
-    
-    for i in range(num_graphs):
-        print(f"\n{'='*100}")
-        print(f"GRAPH {i+1} INPUT")
-        print(f"{'='*100}")
+    if result['success']:
+        print("\n✓ PATH FOUND!")
+        print("-" * 80)
+        print(f"\na) Total Time Taken:           {result['execution_time_ms']:.6f} ms")
+        print(f"b) Nodes/Cells Explored:       {result['nodes_explored']} nodes")
+        print(f"c) Nodes in Final Path:        {result['path_length']} nodes")
+        print()
+        print(f"Path Cost:                     {result['path_length'] - 1} (with unit cost = 1)")
+        print()
         
-        graph_type = input("\nEnter graph type (1=weighted, 2=grid): ").strip()
-        
-        if graph_type == '1':
-            graph_data = input_weighted_graph()
-            graphs.append(graph_data)
+        # Display path
+        if result['path_length'] <= 20:
+            print(f"Complete Path:")
+            print(f"{' → '.join([f'({x},{y})' for x, y in result['path']])}")
         else:
-            graph_data = input_grid_graph()
-            graphs.append(graph_data)
+            print(f"Path (first 5 and last 5 nodes):")
+            first_5 = ' → '.join([f'({x},{y})' for x, y in result['path'][:5]])
+            last_5 = ' → '.join([f'({x},{y})' for x, y in result['path'][-5:]])
+            print(f"{first_5} ... {last_5}")
+        
+        # Display grid with path
+        display_grid(rows, cols, start, goal, obstacles, result['path'])
+        
+    else:
+        print("\n✗ NO PATH FOUND!")
+        print("-" * 80)
+        print(f"\na) Total Time Taken:           {result['execution_time_ms']:.6f} ms")
+        print(f"b) Nodes/Cells Explored:       {result['nodes_explored']} nodes")
+        print(f"c) Nodes in Final Path:        0 nodes (no path exists)")
+        print("\nReason: The goal is unreachable from the start position.")
     
-    # Run Dijkstra on all graphs
-    print("\n\n" + "=" * 100)
-    print("RUNNING DIJKSTRA'S ALGORITHM ON ALL GRAPHS")
-    print("=" * 100)
+    print("\n" + "=" * 80)
+    print("ANALYSIS COMPLETE")
+    print("=" * 80)
     
-    results_summary = []
+    # Ask if user wants to test another scenario
+    print("\nWould you like to test another scenario? (y/n): ", end="")
+    if input().strip().lower() == 'y':
+        run_dijkstra_analysis()
+
+
+# Example scenarios for quick testing
+def run_example_scenarios():
+    """
+    Pre-defined example scenarios for quick testing
+    """
+    print("\n" + "=" * 80)
+    print("EXAMPLE SCENARIOS - DIJKSTRA'S ALGORITHM")
+    print("=" * 80)
     
-    for idx, (graph, start, goal, description) in enumerate(graphs, 1):
-        print(f"\n{'=' * 100}")
-        print(f"GRAPH {idx}: {description}")
-        print(f"{'=' * 100}")
+    scenarios = [
+        {
+            'name': 'Simple 5x5 Grid - No Obstacles',
+            'grid': (5, 5),
+            'obstacles': [],
+            'start': (0, 0),
+            'goal': (4, 4)
+        },
+        {
+            'name': '10x10 Grid - With Obstacles',
+            'grid': (10, 10),
+            'obstacles': [(2, 2), (2, 3), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4)],
+            'start': (0, 0),
+            'goal': (9, 9)
+        },
+        {
+            'name': '8x8 Grid - Maze-like',
+            'grid': (8, 8),
+            'obstacles': [(1, 1), (1, 2), (1, 3), (3, 1), (3, 3), (5, 1), (5, 2), (5, 3), (5, 5)],
+            'start': (0, 0),
+            'goal': (7, 7)
+        }
+    ]
+    
+    print("\nAvailable scenarios:")
+    for i, scenario in enumerate(scenarios, 1):
+        print(f"{i}. {scenario['name']}")
+    print(f"{len(scenarios) + 1}. Custom input")
+    
+    choice = int(input("\nSelect scenario (1-4): "))
+    
+    if choice <= len(scenarios):
+        scenario = scenarios[choice - 1]
+        print(f"\n{'=' * 80}")
+        print(f"SCENARIO: {scenario['name']}")
+        print(f"{'=' * 80}")
+        
+        rows, cols = scenario['grid']
+        obstacles = scenario['obstacles']
+        start = scenario['start']
+        goal = scenario['goal']
+        
+        print(f"Grid: {rows} x {cols}")
+        print(f"Obstacles: {len(obstacles)}")
         print(f"Start: {start}")
         print(f"Goal: {goal}")
-        print(f"Total nodes in graph: {len(graph)}")
-        print()
         
-        # Determine graph type
-        graph_type = 'grid' if isinstance(start, tuple) else 'weighted'
+        display_grid(rows, cols, start, goal, obstacles)
         
-        # Run Dijkstra's
-        algo_dijkstra = GraphAlgorithms(graph, graph_type)
-        dijkstra_result = algo_dijkstra.dijkstra(start, goal)
+        print("\nRunning Dijkstra's Algorithm...")
+        pathfinder = DijkstraPathfinder(scenario['grid'], scenario['obstacles'])
+        result = pathfinder.dijkstra(scenario['start'], scenario['goal'])
         
-        # Display results
-        print("DIJKSTRA'S ALGORITHM RESULTS:")
-        print("-" * 100)
-        print(f"⏱️  Execution Time:    {dijkstra_result['execution_time']:>10.4f} ms")
-        print(f"🔍 Nodes Explored:    {dijkstra_result['nodes_explored']:>10} nodes")
-        print(f"📏 Path Length:       {dijkstra_result['path_length']:>10} nodes")
-        print()
+        print("\n" + "=" * 80)
+        print("RESULTS")
+        print("=" * 80)
+        print(f"\na) Total Time Taken:           {result['execution_time_ms']:.6f} ms")
+        print(f"b) Nodes/Cells Explored:       {result['nodes_explored']} nodes")
+        print(f"c) Nodes in Final Path:        {result['path_length']} nodes")
         
-        if dijkstra_result['path']:
-            if len(dijkstra_result['path']) <= 10:
-                print(f"Path: {' -> '.join(map(str, dijkstra_result['path']))}")
-            else:
-                print(f"Path: {' -> '.join(map(str, dijkstra_result['path'][:5]))} ... {' -> '.join(map(str, dijkstra_result['path'][-3:]))}")
-        else:
-            print("Path: No path found")
+        if result['success']:
+            display_grid(rows, cols, start, goal, obstacles, result['path'])
         
-        # Store for summary
-        results_summary.append({
-            'graph': description,
-            'result': dijkstra_result
-        })
-    
-    # Overall summary
-    print(f"\n\n{'=' * 100}")
-    print("OVERALL SUMMARY - DIJKSTRA'S ALGORITHM PERFORMANCE")
-    print(f"{'=' * 100}\n")
-    
-    print(f"{'Graph':<40} {'Time (ms)':<15} {'Nodes Explored':<20} {'Path Length':<15}")
-    print("-" * 100)
-    
-    total_time = 0
-    total_nodes = 0
-    total_path = 0
-    
-    for result in results_summary:
-        print(f"{result['graph']:<40} {result['result']['execution_time']:>10.4f}     {result['result']['nodes_explored']:>15}     {result['result']['path_length']:>12}")
-        total_time += result['result']['execution_time']
-        total_nodes += result['result']['nodes_explored']
-        total_path += result['result']['path_length']
-    
-    if num_graphs > 0:
-        print("-" * 100)
-        print(f"{'AVERAGE:':<40} {total_time/num_graphs:>10.4f}     {total_nodes/num_graphs:>15.1f}     {total_path/num_graphs:>12.1f}")
-    
-    print()
-    print("KEY OBSERVATIONS:")
-    print("-" * 100)
-    print("✓ Dijkstra's algorithm guarantees finding the OPTIMAL (shortest) path.")
-    print("✓ The algorithm explores nodes in order of their distance from the start.")
-    print("✓ More complex graphs with obstacles require exploring more nodes.")
-    print("✓ Execution time increases with graph size and complexity.")
-    print()
-    print("=" * 100)
+    else:
+        run_dijkstra_analysis()
 
 
 if __name__ == "__main__":
-    run_comparison()
+    print("\n" + "=" * 80)
+    print("DIJKSTRA'S ALGORITHM - RESEARCH IMPLEMENTATION")
+    print("=" * 80)
+    print("\nChoose mode:")
+    print("1. Example scenarios (quick test)")
+    print("2. Custom input")
+    
+    mode = input("\nEnter choice (1 or 2): ").strip()
+    
+    if mode == '1':
+        run_example_scenarios()
+    else:
+        run_dijkstra_analysis()
