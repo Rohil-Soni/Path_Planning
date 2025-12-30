@@ -105,12 +105,7 @@ class DijkstraPathfinder:
             path.append(current)
             current = parent[current]
         path.reverse()
-        return path
-
-
-
-
-
+        return path 
 def run_dijkstra_analysis():
     """
     Main function to run Dijkstra's algorithm with user input
