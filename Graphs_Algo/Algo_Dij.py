@@ -1,4 +1,8 @@
 import time
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.colors import ListedColormap
+import numpy as np
 
 class Node:
     """Simple linked list node for queue implementation"""
@@ -56,7 +60,10 @@ class DijkstraPathfinder:
         obstacles: list of (row, col) tuples representing blocked cells
         """
         self.rows, self.cols = grid
-        self.obstacles = set(obstacles)
+        # Use 2D array for obstacles instead of set/dict
+        self.obstacle_grid = [[False] * self.cols for _ in range(self.rows)]
+        for r, c in obstacles:
+            self.obstacle_grid[r][c] = True
         self.UNIT_COST = 1  # Fixed unit cost for all movements
         
     
@@ -74,14 +81,14 @@ class DijkstraPathfinder:
             nx, ny = x + dx, y + dy
             # Check if neighbor is within grid bounds and not an obstacle
             if (0 <= nx < self.rows and 0 <= ny < self.cols and 
-                (nx, ny) not in self.obstacles):
+                not self.obstacle_grid[nx][ny]):
                 neighbors.append((nx, ny))
         
         return neighbors
     
     def dijkstra(self, start, goal):
         """
-        Optimized Dijkstra's algorithm using linked list queue
+        Optimized Dijkstra's algorithm using only arrays and linked list
         Time Complexity: O(V^2) where V is number of vertices
         Space Complexity: O(V)
         Returns: dictionary with path, metrics
@@ -92,23 +99,31 @@ class DijkstraPathfinder:
         queue = SimpleQueue()
         queue.insert(start, 0)
         
+        # Use 2D arrays instead of dictionaries for O(1) access
+        INF = float('inf')
         # Distance from start to each node
-        distances = {start: 0}
+        distances = [[INF] * self.cols for _ in range(self.rows)]
+        distances[start[0]][start[1]] = 0
+        
         # To reconstruct the path
-        parent = {start: None}
+        parent = [[None] * self.cols for _ in range(self.rows)]
+        
         # Track explored nodes
-        explored = set()
+        explored = [[False] * self.cols for _ in range(self.rows)]
         nodes_explored = 0
+        explored_list = []  # Store order of exploration for visualization
         
         while not queue.is_empty():
             current_node, current_cost = queue.pop()
+            x, y = current_node
             
             # Skip if already explored
-            if current_node in explored:
+            if explored[x][y]:
                 continue
             
-            explored.add(current_node)
+            explored[x][y] = True
             nodes_explored += 1
+            explored_list.append((x, y))  # Track exploration order
             
             # Goal found - early exit
             if current_node == goal:
@@ -120,18 +135,20 @@ class DijkstraPathfinder:
                     'nodes_explored': nodes_explored,
                     'execution_time_ms': (end_time - start_time) * 1000,
                     'path_length': len(path),
-                    'success': True
+                    'success': True,
+                    'explored_nodes': explored_list
                 }
             
             # Explore neighbors
             for neighbor in self.get_neighbors(current_node):
-                if neighbor not in explored:
+                nx, ny = neighbor
+                if not explored[nx][ny]:
                     new_cost = current_cost + self.UNIT_COST
                     
                     # Only update if we found a better path
-                    if neighbor not in distances or new_cost < distances[neighbor]:
-                        distances[neighbor] = new_cost
-                        parent[neighbor] = current_node
+                    if new_cost < distances[nx][ny]:
+                        distances[nx][ny] = new_cost
+                        parent[nx][ny] = current_node
                         queue.insert(neighbor, new_cost)
         
         # No path found
@@ -141,20 +158,103 @@ class DijkstraPathfinder:
             'nodes_explored': nodes_explored,
             'execution_time_ms': (end_time - start_time) * 1000,
             'path_length': 0,
-            'success': False
+            'success': False,
+            'explored_nodes': explored_list
         }
     
     def _reconstruct_path(self, parent, start, goal):
         """
-        Reconstruct path from start to goal
+        Reconstruct path from start to goal using 2D parent array
         """
         path = []
         current = goal
         while current is not None:
             path.append(current)
-            current = parent[current]
+            x, y = current
+            current = parent[x][y]
         path.reverse()
-        return path 
+        return path
+
+def visualize_pathfinding(rows, cols, obstacles, start, goal, result):
+    """
+    Visualize the pathfinding process using matplotlib
+    """
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(12, 10))
+    
+    # Create grid visualization
+    grid = np.zeros((rows, cols))
+    
+    # Mark obstacles (value = 1)
+    for obs in obstacles:
+        grid[obs[0]][obs[1]] = 1
+    
+    # Mark explored nodes (value = 2)
+    if 'explored_nodes' in result:
+        for node in result['explored_nodes']:
+            if node != start and node != goal:
+                grid[node[0]][node[1]] = 2
+    
+    # Mark path (value = 3)
+    if result['success']:
+        for node in result['path']:
+            if node != start and node != goal:
+                grid[node[0]][node[1]] = 3
+    
+    # Mark start (value = 4) and goal (value = 5)
+    grid[start[0]][start[1]] = 4
+    grid[goal[0]][goal[1]] = 5
+    
+    # Define colors: white (empty), black (obstacle), light blue (explored), 
+    # green (path), red (start), yellow (goal)
+    colors = ['white', 'black', '#87CEEB', '#00FF00', '#FF0000', '#FFD700']
+    cmap = ListedColormap(colors)
+    
+    # Plot the grid
+    im = ax.imshow(grid, cmap=cmap, interpolation='nearest', origin='upper')
+    
+    # Add grid lines
+    ax.set_xticks(np.arange(-0.5, cols, 1), minor=True)
+    ax.set_yticks(np.arange(-0.5, rows, 1), minor=True)
+    ax.grid(which='minor', color='gray', linestyle='-', linewidth=0.5)
+    ax.tick_params(which='minor', size=0)
+    
+    # Set major ticks
+    ax.set_xticks(np.arange(0, cols, 1))
+    ax.set_yticks(np.arange(0, rows, 1))
+    ax.set_xticklabels(np.arange(0, cols, 1))
+    ax.set_yticklabels(np.arange(0, rows, 1))
+    
+    # Add title and labels
+    status = "PATH FOUND" if result['success'] else "NO PATH FOUND"
+    plt.title(f"Dijkstra's Algorithm Visualization - {status}\n"
+              f"Grid: {rows}x{cols} | Explored: {result['nodes_explored']} nodes | "
+              f"Path Length: {result['path_length']} | Time: {result['execution_time_ms']:.2f}ms",
+              fontsize=14, fontweight='bold', pad=20)
+    
+    ax.set_xlabel('Column', fontsize=12)
+    ax.set_ylabel('Row', fontsize=12)
+    
+    # Create legend
+    legend_elements = [
+        patches.Patch(facecolor='#FF0000', edgecolor='black', label='Start'),
+        patches.Patch(facecolor='#FFD700', edgecolor='black', label='Goal'),
+        patches.Patch(facecolor='black', edgecolor='black', label='Obstacles'),
+        patches.Patch(facecolor='#87CEEB', edgecolor='black', label='Explored'),
+        patches.Patch(facecolor='#00FF00', edgecolor='black', label='Path')
+    ]
+    ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1.02, 1), 
+              fontsize=11, frameon=True, shadow=True)
+    
+    # Add annotations for start and goal
+    ax.text(start[1], start[0], 'S', ha='center', va='center', 
+            fontsize=14, fontweight='bold', color='white')
+    ax.text(goal[1], goal[0], 'G', ha='center', va='center', 
+            fontsize=14, fontweight='bold', color='black')
+    
+    plt.tight_layout()
+    plt.show()
+
 def run_dijkstra_analysis():
     """
     Main function to run Dijkstra's algorithm with user input
@@ -277,6 +377,10 @@ def run_dijkstra_analysis():
     print("\n" + "=" * 80)
     print("ANALYSIS COMPLETE")
     print("=" * 80)
+    
+    # Visualize the pathfinding
+    print("\n📊 Generating visualization...")
+    visualize_pathfinding(rows, cols, obstacles, start, goal, result)
     
     # Ask if user wants to test another scenario
     print("\nWould you like to test another scenario? (y/n): ", end="")
