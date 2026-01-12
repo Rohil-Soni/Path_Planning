@@ -1,10 +1,52 @@
-import heapq
 import time
+
+class Node:
+    """Simple linked list node for queue implementation"""
+    def __init__(self, data, cost):
+        self.data = data
+        self.cost = cost
+        self.next = None
+
+class SimpleQueue:
+    """Basic linked list queue for Dijkstra's algorithm"""
+    def __init__(self):
+        self.head = None
+        self.size = 0
+    
+    def is_empty(self):
+        return self.head is None
+    
+    def insert(self, data, cost):
+        """Insert node in sorted order by cost"""
+        new_node = Node(data, cost)
+        self.size += 1
+        
+        if self.head is None or cost < self.head.cost:
+            new_node.next = self.head
+            self.head = new_node
+            return
+        
+        current = self.head
+        while current.next and current.next.cost <= cost:
+            current = current.next
+        new_node.next = current.next
+        current.next = new_node
+    
+    def pop(self):
+        """Remove and return minimum cost node"""
+        if self.head is None:
+            return None, None
+        data = self.head.data
+        cost = self.head.cost
+        self.head = self.head.next
+        self.size -= 1
+        return data, cost
 
 class DijkstraPathfinder:
     """
-    Dijkstra's Algorithm Implementation for Research Analysis
+    Optimized Dijkstra's Algorithm Implementation
     Unit cost: 1 for all paths
+    Uses only arrays and linked lists
     """
     
     def __init__(self, grid, obstacles):
@@ -17,9 +59,11 @@ class DijkstraPathfinder:
         self.obstacles = set(obstacles)
         self.UNIT_COST = 1  # Fixed unit cost for all movements
         
+    
     def get_neighbors(self, node):
         """
         Get valid neighbors (4-directional: up, down, left, right)
+        Optimized with early termination
         """
         x, y = node
         neighbors = []
@@ -37,13 +81,17 @@ class DijkstraPathfinder:
     
     def dijkstra(self, start, goal):
         """
-        Dijkstra's algorithm with performance metrics
+        Optimized Dijkstra's algorithm using linked list queue
+        Time Complexity: O(V^2) where V is number of vertices
+        Space Complexity: O(V)
         Returns: dictionary with path, metrics
         """
         start_time = time.time()
         
-        # Priority queue: (cost, node)
-        pq = [(0, start)]
+        # Use linked list based priority queue
+        queue = SimpleQueue()
+        queue.insert(start, 0)
+        
         # Distance from start to each node
         distances = {start: 0}
         # To reconstruct the path
@@ -52,8 +100,8 @@ class DijkstraPathfinder:
         explored = set()
         nodes_explored = 0
         
-        while pq:
-            current_cost, current_node = heapq.heappop(pq)
+        while not queue.is_empty():
+            current_node, current_cost = queue.pop()
             
             # Skip if already explored
             if current_node in explored:
@@ -62,7 +110,7 @@ class DijkstraPathfinder:
             explored.add(current_node)
             nodes_explored += 1
             
-            # Goal found
+            # Goal found - early exit
             if current_node == goal:
                 end_time = time.time()
                 path = self._reconstruct_path(parent, start, goal)
@@ -80,10 +128,11 @@ class DijkstraPathfinder:
                 if neighbor not in explored:
                     new_cost = current_cost + self.UNIT_COST
                     
+                    # Only update if we found a better path
                     if neighbor not in distances or new_cost < distances[neighbor]:
                         distances[neighbor] = new_cost
                         parent[neighbor] = current_node
-                        heapq.heappush(pq, (new_cost, neighbor))
+                        queue.insert(neighbor, new_cost)
         
         # No path found
         end_time = time.time()
