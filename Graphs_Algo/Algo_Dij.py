@@ -69,17 +69,13 @@ class DijkstraPathfinder:
     
     def get_neighbors(self, node):
         """
-        Get valid neighbors (8-directional: up, down, left, right + diagonals)
+        Get valid neighbors (4-directional: up, down, left, right)
         Optimized with early termination
         """
         x, y = node
         neighbors = []
-        # 8-directional movement: 4 cardinal + 4 diagonal directions
-        # Right, Down, Left, Up, Top-Right, Bottom-Right, Bottom-Left, Top-Left
-        directions = [
-            (0, 1), (1, 0), (0, -1), (-1, 0),       # Cardinal directions
-            (-1, 1), (1, 1), (1, -1), (-1, -1)      # Diagonal directions
-        ]
+        # 4-directional movement: Right, Down, Left, Up
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
