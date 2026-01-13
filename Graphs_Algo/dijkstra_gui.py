@@ -16,7 +16,6 @@ import numpy as np
 import random
 import time
 from datetime import datetime
-import threading
 import os
 
 from Algo_Dij import DijkstraPathfinder
@@ -335,7 +334,7 @@ class DijkstraGUI:
         return obstacles, result
     
     def run_simulation(self):
-        """Run the pathfinding simulation in a separate thread"""
+        """Run the pathfinding simulation"""
         # Validate inputs
         rows = self.rows.get()
         cols = self.cols.get()
@@ -347,41 +346,40 @@ class DijkstraGUI:
             messagebox.showerror("Error", "Start and Goal positions must be different!")
             return
         
-        self.status_label.config(text="Running simulation...", foreground="orange")
+        self.status_label.config(text="Generating obstacles...", foreground="orange")
+        self.root.update()
         
-        # Run in separate thread to prevent GUI freezing
-        thread = threading.Thread(target=self.run_simulation_thread, 
-                                 args=(rows, cols, start, goal, min_obs))
-        thread.daemon = True
-        thread.start()
-    
-    def run_simulation_thread(self, rows, cols, start, goal, min_obs):
-        """Thread function to run simulation"""
         try:
             # Generate obstacles
             obstacles, result = self.generate_random_obstacles(rows, cols, start, goal, min_obs)
             
             if not result['success']:
-                self.root.after(0, lambda: messagebox.showerror("Error", "No path found!"))
-                self.root.after(0, lambda: self.status_label.config(text="Failed: No path found", foreground="red"))
+                messagebox.showerror("Error", "No path found!")
+                self.status_label.config(text="Failed: No path found", foreground="red")
                 return
+            
+            self.status_label.config(text="Opening visualization...", foreground="blue")
+            self.root.update()
             
             # Create animation
             self.create_animation(rows, cols, start, goal, obstacles, result)
             
-            self.root.after(0, lambda: self.status_label.config(text="✓ Simulation complete!", foreground="green"))
-            
         except Exception as e:
-            self.root.after(0, lambda: messagebox.showerror("Error", f"Simulation failed: {str(e)}"))
-            self.root.after(0, lambda: self.status_label.config(text="Failed!", foreground="red"))
+            messagebox.showerror("Error", f"Simulation failed: {str(e)}")
+            self.status_label.config(text="Failed!", foreground="red")
     
     def create_animation(self, rows, cols, start, goal, obstacles, result):
-        """Create and save animation"""
+        """Create and display live animation in GUI window"""
         explored_nodes = result['explored_nodes']
         path_nodes = result['path']
         
-        # Create figure
-        fig, ax = plt.subplots(figsize=(10, 8))
+        # Create new window for visualization
+        viz_window = tk.Toplevel(self.root)
+        viz_window.title("Dijkstra's Algorithm - Live Simulation")
+        viz_window.geometry("900x700")
+        
+        # Create figure for matplotlib
+        fig, ax = plt.subplots(figsize=(8, 6))
         
         colors = ['white', 'black', '#87CEEB', '#00FF00', '#FF0000', '#FFD700']
         cmap = ListedColormap(colors)
@@ -404,8 +402,8 @@ class DijkstraGUI:
         ax.set_xticks(np.arange(0, cols, 1))
         ax.set_yticks(np.arange(0, rows, 1))
         
-        ax.set_xlabel('Column', fontsize=12)
-        ax.set_ylabel('Row', fontsize=12)
+        ax.set_xlabel('Column', fontsize=10)
+        ax.set_ylabel('Row', fontsize=10)
         
         legend_elements = [
             patches.Patch(facecolor='#FF0000', edgecolor='black', label='Start'),
@@ -415,99 +413,140 @@ class DijkstraGUI:
             patches.Patch(facecolor='#00FF00', edgecolor='black', label='Path')
         ]
         ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1.02, 1), 
-                  fontsize=10, frameon=True, shadow=True)
+                  fontsize=9, frameon=True, shadow=True)
         
         ax.text(start[1], start[0], 'S', ha='center', va='center', 
-                fontsize=12, fontweight='bold', color='white')
+                fontsize=10, fontweight='bold', color='white')
         ax.text(goal[1], goal[0], 'G', ha='center', va='center', 
-                fontsize=12, fontweight='bold', color='black')
+                fontsize=10, fontweight='bold', color='black')
         
-        title_text = ax.text(0.5, 1.08, '', transform=ax.transAxes,
-                            ha='center', fontsize=12, fontweight='bold')
+        title_text = ax.text(0.5, 1.08, 'Initializing...', transform=ax.transAxes,
+                            ha='center', fontsize=11, fontweight='bold')
         
-        animation_phase = [0]
-        frame_count = [0]
+        plt.tight_layout()
         
-        def update(frame):
+        # Embed matplotlib in tkinter
+        canvas = FigureCanvasTkAgg(fig, master=viz_window)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        
+        # Control frame
+        control_frame = ttk.Frame(viz_window)
+        control_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        status_var = tk.StringVar(value="Starting simulation...")
+        status_label = ttk.Label(control_frame, textvariable=status_var, font=('Arial', 10))
+        status_label.pack(side=tk.LEFT, padx=5)
+        
+        save_btn = ttk.Button(control_frame, text="Save Animation", state='disabled')
+        save_btn.pack(side=tk.RIGHT, padx=5)
+        
+        # Animation state
+        current_frame = [0]
+        animation_phase = [0]  # 0: exploring, 1: showing path
+        is_running = [True]
+        
+        def animate_step():
+            if not is_running[0]:
+                return
+            
             phase = animation_phase[0]
             
-            if phase == 0:
-                if frame < len(explored_nodes):
-                    node = explored_nodes[frame]
+            if phase == 0:  # Exploration phase
+                if current_frame[0] < len(explored_nodes):
+                    node = explored_nodes[current_frame[0]]
                     if node != start and node != goal:
                         grid[node[0]][node[1]] = 2
                     
                     im.set_array(grid)
                     title_text.set_text(
-                        f"Dijkstra's Algorithm - Exploring Nodes\n"
-                        f"Explored: {frame + 1}/{len(explored_nodes)} | Obstacles: {len(obstacles)}"
+                        f"Exploring Nodes - Step {current_frame[0] + 1}/{len(explored_nodes)}"
                     )
-                    frame_count[0] = frame
-                    return [im, title_text]
+                    status_var.set(
+                        f"Exploring... {current_frame[0] + 1}/{len(explored_nodes)} nodes | "
+                        f"Obstacles: {len(obstacles)}"
+                    )
+                    canvas.draw()
+                    current_frame[0] += 1
+                    viz_window.after(50, animate_step)  # 50ms delay
                 else:
+                    # Move to path drawing phase
                     animation_phase[0] = 1
-                    frame_count[0] = 0
-                    return [im, title_text]
+                    current_frame[0] = 0
+                    viz_window.after(500, animate_step)  # Pause before showing path
             
-            elif phase == 1:
-                adjusted_frame = frame_count[0]
-                if adjusted_frame < len(path_nodes):
-                    node = path_nodes[adjusted_frame]
+            elif phase == 1:  # Path drawing phase
+                if current_frame[0] < len(path_nodes):
+                    node = path_nodes[current_frame[0]]
                     if node != start and node != goal:
                         grid[node[0]][node[1]] = 3
                     
                     im.set_array(grid)
                     title_text.set_text(
-                        f"Dijkstra's Algorithm - Final Path\n"
-                        f"Path: {adjusted_frame + 1}/{len(path_nodes)} | Total Cost: {len(path_nodes) - 1}"
+                        f"Drawing Final Path - Step {current_frame[0] + 1}/{len(path_nodes)}"
                     )
-                    frame_count[0] += 1
-                    return [im, title_text]
+                    status_var.set(
+                        f"Drawing path... {current_frame[0] + 1}/{len(path_nodes)} nodes | "
+                        f"Total cost: {len(path_nodes) - 1}"
+                    )
+                    canvas.draw()
+                    current_frame[0] += 1
+                    viz_window.after(100, animate_step)  # Slower for path
                 else:
-                    title_text.set_text(
-                        f"Dijkstra's Algorithm - COMPLETE\n"
-                        f"Explored: {result['nodes_explored']} | Path: {result['path_length']} | "
-                        f"Time: {result['execution_time_ms']:.2f}ms"
+                    # Animation complete
+                    is_running[0] = False
+                    title_text.set_text("Simulation Complete!")
+                    status_var.set(
+                        f"✓ COMPLETE | Explored: {result['nodes_explored']} | "
+                        f"Path: {result['path_length']} | Time: {result['execution_time_ms']:.2f}ms"
                     )
-                    return [im, title_text]
+                    canvas.draw()
+                    save_btn.config(state='normal', command=lambda: self.save_animation_files(
+                        fig, result, obstacles, viz_window
+                    ))
+                    self.root.after(0, lambda: self.status_label.config(
+                        text="✓ Simulation complete! Check visualization window.", 
+                        foreground="green"
+                    ))
+        
+        # Start animation
+        viz_window.after(500, animate_step)
+        
+        # Handle window close
+        def on_close():
+            is_running[0] = False
+            plt.close(fig)
+            viz_window.destroy()
+        
+        viz_window.protocol("WM_DELETE_WINDOW", on_close)
+    
+    def save_animation_files(self, fig, result, obstacles, viz_window):
+        """Save the animation to GIF and PNG files"""
+        try:
+            # Generate filename
+            base_filename = self.custom_filename.get()
+            if self.auto_timestamp.get():
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                final_file = f"{base_filename}_{timestamp}_final.png"
+            else:
+                final_file = f"{base_filename}_final.png"
             
-            return [im, title_text]
-        
-        total_frames = len(explored_nodes) + len(path_nodes) + 30
-        anim = FuncAnimation(fig, update, frames=total_frames, 
-                            interval=50, blit=True, repeat=False)
-        
-        plt.tight_layout()
-        
-        # Generate filename
-        base_filename = self.custom_filename.get()
-        if self.auto_timestamp.get():
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = f"{base_filename}_{timestamp}.gif"
-            final_file = f"{base_filename}_{timestamp}_final.png"
-        else:
-            output_file = f"{base_filename}.gif"
-            final_file = f"{base_filename}_final.png"
-        
-        # Save in the Graphs_Algo directory
-        output_path = os.path.join(os.path.dirname(__file__), output_file)
-        final_path = os.path.join(os.path.dirname(__file__), final_file)
-        
-        anim.save(output_path, writer='pillow', fps=20, dpi=100)
-        plt.savefig(final_path, dpi=150, bbox_inches='tight')
-        
-        plt.close(fig)
-        
-        # Show success message
-        self.root.after(0, lambda: messagebox.showinfo(
-            "Success", 
-            f"Animation saved!\n\n"
-            f"GIF: {output_file}\n"
-            f"PNG: {final_file}\n\n"
-            f"Path Length: {result['path_length']}\n"
-            f"Nodes Explored: {result['nodes_explored']}\n"
-            f"Time: {result['execution_time_ms']:.2f}ms"
-        ))
+            # Save in the Graphs_Algo directory
+            final_path = os.path.join(os.path.dirname(__file__), final_file)
+            
+            fig.savefig(final_path, dpi=150, bbox_inches='tight')
+            
+            messagebox.showinfo(
+                "Saved", 
+                f"Visualization saved!\n\n"
+                f"PNG: {final_file}\n\n"
+                f"Path Length: {result['path_length']}\n"
+                f"Nodes Explored: {result['nodes_explored']}\n"
+                f"Time: {result['execution_time_ms']:.2f}ms",
+                parent=viz_window
+            )
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save: {str(e)}", parent=viz_window)
 
 
 def main():
