@@ -1,62 +1,19 @@
 import time
+import math
+import heapq
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.colors import ListedColormap
 import numpy as np
 
-class Node:
-    """Simple linked list node for priority queue implementation"""
-    def __init__(self, data, f_cost, g_cost):
-        self.data = data
-        self.f_cost = f_cost  # f(n) = g(n) + h(n)
-        self.g_cost = g_cost  # Actual cost from start
-        self.next = None
-
-class PriorityQueue:
-    """Basic linked list priority queue for A* algorithm"""
-    def __init__(self):
-        self.head = None
-        self.size = 0
-    
-    def is_empty(self):
-        return self.head is None
-    
-    def insert(self, data, f_cost, g_cost):
-        """Insert node in sorted order by f_cost"""
-        new_node = Node(data, f_cost, g_cost)
-        self.size += 1
-        
-        if self.head is None or f_cost < self.head.f_cost:
-            new_node.next = self.head
-            self.head = new_node
-            return
-        
-        current = self.head
-        while current.next and current.next.f_cost <= f_cost:
-            current = current.next
-        new_node.next = current.next
-        current.next = new_node
-    
-    def pop(self):
-        """Remove and return minimum f_cost node"""
-        if self.head is None:
-            return None, None, None
-        data = self.head.data
-        f_cost = self.head.f_cost
-        g_cost = self.head.g_cost
-        self.head = self.head.next
-        self.size -= 1
-        return data, f_cost, g_cost
-
 class AStarPathfinder:
     """
     Optimized A* Algorithm Implementation
-    Unit cost: 1 for all paths
-    Uses Manhattan distance heuristic
-    Uses only arrays and linked lists
+    Uses a binary heap priority queue for faster open-list operations.
+    Supports 8-direction movement with configurable straight/diagonal costs.
     """
     
-    def __init__(self, grid, obstacles):
+    def __init__(self, grid, obstacles, straight_cost=1.0, diagonal_cost=math.sqrt(2.0)):
         """
         Initialize with grid dimensions and obstacles
         grid: (rows, cols) tuple
@@ -67,50 +24,56 @@ class AStarPathfinder:
         self.obstacle_grid = [[False] * self.cols for _ in range(self.rows)]
         for r, c in obstacles:
             self.obstacle_grid[r][c] = True
-        self.UNIT_COST = 1  # Fixed unit cost for all movements
+        self.straight_cost = float(straight_cost)
+        self.diagonal_cost = float(diagonal_cost)
+        self._directions = [
+            (0, 1, self.straight_cost),
+            (1, 0, self.straight_cost),
+            (0, -1, self.straight_cost),
+            (-1, 0, self.straight_cost),
+            (-1, 1, self.diagonal_cost),
+            (1, 1, self.diagonal_cost),
+            (1, -1, self.diagonal_cost),
+            (-1, -1, self.diagonal_cost),
+        ]
     
     def heuristic(self, node, goal):
         """
-        Manhattan distance heuristic (L1 distance)
-        Admissible and consistent for grid-based pathfinding
+        Octile-style heuristic for 8-direction movement.
+        Reduces to Chebyshev when straight and diagonal costs are equal.
         """
-        return abs(node[0] - goal[0]) + abs(node[1] - goal[1])
+        dx = abs(node[0] - goal[0])
+        dy = abs(node[1] - goal[1])
+        dmin, dmax = min(dx, dy), max(dx, dy)
+        return self.diagonal_cost * dmin + self.straight_cost * (dmax - dmin)
     
     def get_neighbors(self, node):
         """
-        Get valid neighbors (8-directional: up, down, left, right + diagonals)
-        Optimized with early termination
+        Get valid 8-direction neighbors with movement cost.
         """
         x, y = node
         neighbors = []
-        # 8-directional movement: 4 cardinal + 4 diagonal directions
-        directions = [
-            (0, 1), (1, 0), (0, -1), (-1, 0),       # Cardinal directions
-            (-1, 1), (1, 1), (1, -1), (-1, -1)      # Diagonal directions
-        ]
-        
-        for dx, dy in directions:
+        for dx, dy, move_cost in self._directions:
             nx, ny = x + dx, y + dy
             # Check if neighbor is within grid bounds and not an obstacle
             if (0 <= nx < self.rows and 0 <= ny < self.cols and 
                 not self.obstacle_grid[nx][ny]):
-                neighbors.append((nx, ny))
+                neighbors.append(((nx, ny), move_cost))
         
         return neighbors
     
     def astar(self, start, goal):
         """
-        Optimized A* algorithm using only arrays and linked list
+        Optimized A* algorithm using arrays and a binary heap.
         Time Complexity: O(V log V) where V is number of vertices
         Space Complexity: O(V)
         Returns: dictionary with path, metrics
         """
         start_time = time.time()
         
-        # Use linked list based priority queue
-        queue = PriorityQueue()
         h_start = self.heuristic(start, goal)
-        queue.insert(start, h_start, 0)
+        # Min-heap entries: (f_score, g_score, row, col)
+        open_heap = [(h_start, 0.0, start[0], start[1])]
         
         # Use 2D arrays instead of dictionaries for O(1) access
         INF = float('inf')
@@ -118,29 +81,33 @@ class AStarPathfinder:
         g_scores = [[INF] * self.cols for _ in range(self.rows)]
         g_scores[start[0]][start[1]] = 0
         
-        # f_score: g_score + heuristic
-        f_scores = [[INF] * self.cols for _ in range(self.rows)]
-        f_scores[start[0]][start[1]] = h_start
-        
         # To reconstruct the path
         parent = [[None] * self.cols for _ in range(self.rows)]
         
-        # Track explored nodes
+        # Track expanded nodes (popped from heap)
         explored = [[False] * self.cols for _ in range(self.rows)]
-        nodes_explored = 0
-        explored_list = []  # Store order of exploration for visualization
+        nodes_expanded = 0
+        expanded_list = []
+
+        # Track discovered nodes (seen and inserted/updated in open list)
+        discovered = [[False] * self.cols for _ in range(self.rows)]
+        discovered[start[0]][start[1]] = True
+        discovered_list = [start]
         
-        while not queue.is_empty():
-            current_node, current_f, current_g = queue.pop()
-            x, y = current_node
-            
-            # Skip if already explored
+        while open_heap:
+            current_f, current_g, x, y = heapq.heappop(open_heap)
+
+            # Skip stale queue entries or already explored nodes
             if explored[x][y]:
                 continue
+            if current_g > g_scores[x][y]:
+                continue
+
+            current_node = (x, y)
             
             explored[x][y] = True
-            nodes_explored += 1
-            explored_list.append((x, y))  # Track exploration order
+            nodes_expanded += 1
+            expanded_list.append((x, y))
             
             # Goal found - early exit
             if current_node == goal:
@@ -149,38 +116,48 @@ class AStarPathfinder:
                 
                 return {
                     'path': path,
-                    'nodes_explored': nodes_explored,
+                    'nodes_explored': len(discovered_list),
+                    'nodes_expanded': nodes_expanded,
                     'execution_time_ms': (end_time - start_time) * 1000,
                     'path_length': len(path),
+                    'total_cost': current_g,
                     'success': True,
-                    'explored_nodes': explored_list,
+                    'explored_nodes': discovered_list,
+                    'expanded_nodes': expanded_list,
                     'algorithm': 'A*'
                 }
             
             # Explore neighbors
-            for neighbor in self.get_neighbors(current_node):
+            for neighbor, move_cost in self.get_neighbors(current_node):
                 nx, ny = neighbor
                 if not explored[nx][ny]:
-                    tentative_g = current_g + self.UNIT_COST
+                    tentative_g = current_g + move_cost
                     
                     # Only update if we found a better path
                     if tentative_g < g_scores[nx][ny]:
                         g_scores[nx][ny] = tentative_g
+                        parent[nx][ny] = current_node
                         h_score = self.heuristic(neighbor, goal)
                         f_score = tentative_g + h_score
-                        f_scores[nx][ny] = f_score
-                        parent[nx][ny] = current_node
-                        queue.insert(neighbor, f_score, tentative_g)
+                        heapq.heappush(open_heap, (f_score, tentative_g, nx, ny))
+
+                        # Mark node once when it is first discovered.
+                        if not discovered[nx][ny]:
+                            discovered[nx][ny] = True
+                            discovered_list.append(neighbor)
         
         # No path found
         end_time = time.time()
         return {
             'path': [],
-            'nodes_explored': nodes_explored,
+            'nodes_explored': len(discovered_list),
+            'nodes_expanded': nodes_expanded,
             'execution_time_ms': (end_time - start_time) * 1000,
             'path_length': 0,
+            'total_cost': INF,
             'success': False,
-            'explored_nodes': explored_list,
+            'explored_nodes': discovered_list,
+            'expanded_nodes': expanded_list,
             'algorithm': 'A*'
         }
     
@@ -284,9 +261,10 @@ def run_astar_analysis():
     print("\n" + "=" * 80)
     print("A* ALGORITHM - PATH FINDING RESEARCH ANALYSIS")
     print("=" * 80)
-    print("Unit Cost: 1 (fixed for all movements)")
+    print("Straight Move Cost: 1.0")
+    print(f"Diagonal Move Cost: {math.sqrt(2.0):.4f}")
     print("Movement: 8-directional (up, down, left, right + diagonals)")
-    print("Heuristic: Manhattan Distance (L1)")
+    print("Heuristic: Octile-style distance")
     print("=" * 80)
     
     # Get grid dimensions
@@ -373,11 +351,24 @@ def run_astar_analysis():
         print("\n✓ PATH FOUND!")
         print("-" * 80)
         print(f"\na) Total Time Taken:           {result['execution_time_ms']:.6f} ms")
-        print(f"b) Nodes/Cells Explored:       {result['nodes_explored']} nodes")
-        print(f"c) Nodes in Final Path:        {result['path_length']} nodes")
+        print(f"b) Nodes/Cells Explored:       {result['nodes_explored']} nodes (discovered)")
+        print(f"c) Nodes Expanded:             {result['nodes_expanded']} nodes (popped)")
+        print(f"d) Nodes in Final Path:        {result['path_length']} nodes")
         print()
-        print(f"Path Cost:                     {result['path_length'] - 1} (with unit cost = 1)")
+        print(f"Path Cost:                     {result['total_cost']:.6f}")
         print()
+
+        # Show explored nodes list in compact form.
+        if result['nodes_explored'] <= 30:
+            print("Explored nodes (discovered order):")
+            print(' → '.join([f'({x},{y})' for x, y in result['explored_nodes']]))
+            print()
+        else:
+            first_10 = ' → '.join([f'({x},{y})' for x, y in result['explored_nodes'][:10]])
+            last_10 = ' → '.join([f'({x},{y})' for x, y in result['explored_nodes'][-10:]])
+            print("Explored nodes (first 10 ... last 10):")
+            print(f"{first_10} ... {last_10}")
+            print()
         
         # Display path
         if result['path_length'] <= 20:
@@ -393,8 +384,9 @@ def run_astar_analysis():
         print("\n✗ NO PATH FOUND!")
         print("-" * 80)
         print(f"\na) Total Time Taken:           {result['execution_time_ms']:.6f} ms")
-        print(f"b) Nodes/Cells Explored:       {result['nodes_explored']} nodes")
-        print(f"c) Nodes in Final Path:        0 nodes (no path exists)")
+        print(f"b) Nodes/Cells Explored:       {result['nodes_explored']} nodes (discovered)")
+        print(f"c) Nodes Expanded:             {result['nodes_expanded']} nodes (popped)")
+        print(f"d) Nodes in Final Path:        0 nodes (no path exists)")
         print("\nReason: The goal is unreachable from the start position.")
     
     print("\n" + "=" * 80)

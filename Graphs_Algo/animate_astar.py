@@ -71,7 +71,7 @@ def animate_pathfinding():
     print(f"\nGrid Size: {ROWS}x{COLS} (FIXED)")
     print(f"Start: {start} | Goal: {goal}")
     print(f"Minimum Obstacles: {MIN_OBSTACLES}")
-    print(f"Heuristic: Manhattan Distance")
+    print(f"Heuristic: Octile-style distance")
     print("\nGenerating random obstacles...\n")
     
     # Generate obstacles and run algorithm
@@ -83,9 +83,11 @@ def animate_pathfinding():
     print(f"✓ PATH FOUND!")
     print(f"\nObstacles:         {len(obstacles)}")
     print(f"Time:              {result['execution_time_ms']:.6f} ms")
-    print(f"Nodes Explored:    {result['nodes_explored']}")
+    print(f"Nodes Explored:    {result['nodes_explored']} (discovered)")
+    print(f"Nodes Expanded:    {result['nodes_expanded']} (popped)")
     print(f"Path Length:       {result['path_length']}")
-    print(f"Path Cost:         {result['path_length'] - 1}")
+    total_cost = result.get('total_cost', result['path_length'] - 1)
+    print(f"Path Cost:         {total_cost:.6f}")
     
     # Prepare animation data
     explored_nodes = result['explored_nodes']
