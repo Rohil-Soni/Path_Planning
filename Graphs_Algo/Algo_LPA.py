@@ -21,7 +21,7 @@ class LPAStarPathfinder:
     - A state is consistent when g(s) == rhs(s)
 
     This implementation uses:
-    - 2D arrays for g/rhs values
+    - sparse dictionaries for g/rhs values
     - lazy-deletion binary heap for priority queue operations
     - incremental updates after obstacle changes
     """
@@ -43,27 +43,27 @@ class LPAStarPathfinder:
             if 0 <= r < self.rows and 0 <= c < self.cols:
                 self.obstacle_grid[r][c] = True
 
+        # 8-neighbor grid for Euclidean-heuristic LPA*.
         self._directions = [
-            (0, 1, self.straight_cost),
-            (1, 0, self.straight_cost),
-            (0, -1, self.straight_cost),
-            (-1, 0, self.straight_cost),
-            (-1, 1, self.diagonal_cost),
-            (1, 1, self.diagonal_cost),
-            (1, -1, self.diagonal_cost),
-            (-1, -1, self.diagonal_cost),
+            (-1, 0),
+            (1, 0),
+            (0, -1),
+            (0, 1),
+            (-1, -1),
+            (-1, 1),
+            (1, -1),
+            (1, 1),
         ]
 
         self.start: Optional[GridNode] = None
         self.goal: Optional[GridNode] = None
 
-        self.g: List[List[float]] = [[self.inf] * self.cols for _ in range(self.rows)]
-        self.rhs: List[List[float]] = [[self.inf] * self.cols for _ in range(self.rows)]
+        self.g: Dict[GridNode, float] = {}
+        self.rhs: Dict[GridNode, float] = {}
 
-        # Priority queue with lazy deletion: heap entries are (k1, k2, tie, row, col)
-        self.open_heap: List[Tuple[float, float, int, int, int]] = []
-        self.entry_finder: Dict[GridNode, Tuple[float, float, int, int, int]] = {}
-        self._tie_counter = 0
+        # Priority queue entries are ((k1, k2), node); _in_q tracks currently valid key.
+        self.open_heap: List[Tuple[Tuple[float, float], GridNode]] = []
+        self._in_q: Dict[GridNode, Tuple[float, float]] = {}
 
         self.initialized = False
 
@@ -76,15 +76,12 @@ class LPAStarPathfinder:
         return self.obstacle_grid[r][c]
 
     def heuristic(self, node: GridNode, goal: GridNode) -> float:
-        dx = abs(node[0] - goal[0])
-        dy = abs(node[1] - goal[1])
-        dmin, dmax = min(dx, dy), max(dx, dy)
-        return self.diagonal_cost * dmin + self.straight_cost * (dmax - dmin)
+        return math.hypot(node[0] - goal[0], node[1] - goal[1])
 
     def _neighbor_coords_all(self, node: GridNode) -> List[GridNode]:
         x, y = node
         out: List[GridNode] = []
-        for dx, dy, _ in self._directions:
+        for dx, dy in self._directions:
             nx, ny = x + dx, y + dy
             if 0 <= nx < self.rows and 0 <= ny < self.cols:
                 out.append((nx, ny))
@@ -96,11 +93,15 @@ class LPAStarPathfinder:
 
         x, y = node
         out: List[Tuple[GridNode, float]] = []
-        for dx, dy, move_cost in self._directions:
+        for dx, dy in self._directions:
             nx, ny = x + dx, y + dy
             n = (nx, ny)
-            if self._in_bounds(n) and not self._is_blocked(n):
-                out.append((n, move_cost))
+            if not self._in_bounds(n) or self._is_blocked(n):
+                continue
+
+            cost = self._move_cost(node, n)
+            if cost < self.inf:
+                out.append((n, cost))
         return out
 
     def _move_cost(self, u: GridNode, v: GridNode) -> float:
@@ -108,7 +109,6 @@ class LPAStarPathfinder:
             return self.inf
         if self._is_blocked(u) or self._is_blocked(v):
             return self.inf
-
         dr = abs(u[0] - v[0])
         dc = abs(u[1] - v[1])
         if dr == 1 and dc == 1:
@@ -117,43 +117,41 @@ class LPAStarPathfinder:
             return self.straight_cost
         return self.inf
 
+    def _g(self, node: GridNode) -> float:
+        return self.g.get(node, self.inf)
+
+    def _rhs(self, node: GridNode) -> float:
+        return self.rhs.get(node, self.inf)
+
     def _calculate_key(self, node: GridNode) -> Tuple[float, float]:
         if self.goal is None:
             return (self.inf, self.inf)
-        r, c = node
-        base = min(self.g[r][c], self.rhs[r][c])
+        base = min(self._g(node), self._rhs(node))
         return (base + self.heuristic(node, self.goal), base)
 
     def _add_or_update_open(self, node: GridNode) -> None:
         key = self._calculate_key(node)
-        self._tie_counter += 1
-        entry = (key[0], key[1], self._tie_counter, node[0], node[1])
-        self.entry_finder[node] = entry
-        heapq.heappush(self.open_heap, entry)
+        heapq.heappush(self.open_heap, (key, node))
+        self._in_q[node] = key
 
     def _remove_open(self, node: GridNode) -> None:
-        if node in self.entry_finder:
-            del self.entry_finder[node]
+        self._in_q.pop(node, None)
 
     def _peek_valid_key(self) -> Tuple[float, float]:
         while self.open_heap:
-            k1, k2, tie, r, c = self.open_heap[0]
-            node = (r, c)
-            entry = self.entry_finder.get(node)
-            if entry is None or entry != (k1, k2, tie, r, c):
+            key, node = self.open_heap[0]
+            if self._in_q.get(node) != key:
                 heapq.heappop(self.open_heap)
                 continue
-            return (k1, k2)
+            return key
         return (self.inf, self.inf)
 
     def _pop_valid_node(self) -> Optional[GridNode]:
         while self.open_heap:
-            k1, k2, tie, r, c = heapq.heappop(self.open_heap)
-            node = (r, c)
-            entry = self.entry_finder.get(node)
-            if entry is None or entry != (k1, k2, tie, r, c):
+            key, node = heapq.heappop(self.open_heap)
+            if self._in_q.get(node) != key:
                 continue
-            del self.entry_finder[node]
+            del self._in_q[node]
             return node
         return None
 
@@ -162,34 +160,69 @@ class LPAStarPathfinder:
         self.goal = goal
         self.initialized = True
 
-        self.g = [[self.inf] * self.cols for _ in range(self.rows)]
-        self.rhs = [[self.inf] * self.cols for _ in range(self.rows)]
+        self.g = {}
+        self.rhs = {}
 
         self.open_heap = []
-        self.entry_finder = {}
-        self._tie_counter = 0
+        self._in_q = {}
 
-        sr, sc = start
-        self.rhs[sr][sc] = 0.0
+        self.rhs[start] = 0.0
         self._add_or_update_open(start)
+
+    def _shift_start(self, new_start: GridNode) -> None:
+        """
+        Move the planning start without discarding accumulated search state.
+
+        This keeps prior g/rhs information and only repairs local consistency,
+        which is the behavior needed for obstacle hit -> predecessor replanning.
+        """
+        if self.start is None or self.goal is None:
+            self._initialize(new_start, self.goal if self.goal is not None else new_start)
+            return
+
+        old_start = self.start
+        if old_start == new_start:
+            return
+
+        self.start = new_start
+
+        # Previous start is no longer the source.
+        self.rhs[old_start] = self.inf
+        self._update_vertex(old_start)
+
+        # New start must satisfy rhs(start)=0 and stay in OPEN if inconsistent.
+        self.rhs[new_start] = 0.0
+        self._remove_open(new_start)
+        if self._g(new_start) != self._rhs(new_start):
+            self._add_or_update_open(new_start)
+
+        # Local repairs around both old and new starts propagate quickly.
+        for nbr in self._neighbor_coords_all(old_start):
+            self._update_vertex(nbr)
+        for nbr in self._neighbor_coords_all(new_start):
+            self._update_vertex(nbr)
 
     def _update_vertex(self, u: GridNode) -> None:
         if self.start is None:
             return
 
-        ur, uc = u
+        # Blocked cells (except start/goal) never need to stay in OPEN or keep rhs entries.
+        if u != self.start and u != self.goal and self._is_blocked(u):
+            self._remove_open(u)
+            self.rhs.pop(u, None)
+            self.g.pop(u, None)
+            return
+
         if u != self.start:
             best_rhs = self.inf
-            for pred, _ in self.get_neighbors(u):
-                pr, pc = pred
-                cost = self._move_cost(pred, u)
-                cand = self.g[pr][pc] + cost
+            for pred, cost in self.get_neighbors(u):
+                cand = self._g(pred) + cost
                 if cand < best_rhs:
                     best_rhs = cand
-            self.rhs[ur][uc] = best_rhs
+            self.rhs[u] = best_rhs
 
         self._remove_open(u)
-        if self.g[ur][uc] != self.rhs[ur][uc]:
+        if self._g(u) != self._rhs(u):
             self._add_or_update_open(u)
 
     def _compute_shortest_path(self) -> Tuple[List[GridNode], int]:
@@ -199,10 +232,9 @@ class LPAStarPathfinder:
         expanded_nodes: List[GridNode] = []
         expanded_count = 0
 
-        gr, gc = self.goal
         while (
             self._peek_valid_key() < self._calculate_key(self.goal)
-            or self.rhs[gr][gc] != self.g[gr][gc]
+            or self._rhs(self.goal) != self._g(self.goal)
         ):
             u = self._pop_valid_node()
             if u is None:
@@ -210,16 +242,13 @@ class LPAStarPathfinder:
 
             expanded_nodes.append(u)
             expanded_count += 1
-            ur, uc = u
 
-            if self.g[ur][uc] > self.rhs[ur][uc]:
-                # Overconsistent state: set g to rhs and propagate improvements.
-                self.g[ur][uc] = self.rhs[ur][uc]
+            if self._g(u) > self._rhs(u):
+                self.g[u] = self._rhs(u)
                 for succ, _ in self.get_neighbors(u):
                     self._update_vertex(succ)
             else:
-                # Underconsistent state: invalidate g and re-evaluate local neighborhood.
-                self.g[ur][uc] = self.inf
+                self.g[u] = self.inf
                 self._update_vertex(u)
                 for succ, _ in self.get_neighbors(u):
                     self._update_vertex(succ)
@@ -230,53 +259,37 @@ class LPAStarPathfinder:
         if self.start is None or self.goal is None:
             return []
 
-        sr, sc = self.start
-        gr, gc = self.goal
-        if self.g[gr][gc] == self.inf:
+        if self._g(self.goal) == self.inf:
             return []
 
-        # g-values are forward costs from start, so reconstruct by walking
-        # backward from goal using predecessor optimality.
-        rev_path = [self.goal]
+        path = [self.goal]
         visited: Set[GridNode] = {self.goal}
         current = self.goal
-        eps = 1e-9
 
-        limit = self.rows * self.cols
-        for _ in range(limit):
+        for _ in range(self.rows * self.cols):
             if current == self.start:
                 break
 
-            cr, cc = current
-            current_g = self.g[cr][cc]
-
             best_pred: Optional[GridNode] = None
-            best_pred_g = self.inf
-
-            for pred, _ in self.get_neighbors(current):
-                pr, pc = pred
-                pred_g = self.g[pr][pc]
-                if pred_g == self.inf:
-                    continue
-
-                # On an optimal predecessor, pred_g + c(pred,current) == current_g.
-                if abs((pred_g + self._move_cost(pred, current)) - current_g) <= eps:
-                    if pred_g < best_pred_g:
-                        best_pred_g = pred_g
-                        best_pred = pred
+            best_cost = self.inf
+            for pred, cost in self.get_neighbors(current):
+                cand = self._g(pred) + cost
+                if cand < best_cost:
+                    best_cost = cand
+                    best_pred = pred
 
             if best_pred is None or best_pred in visited:
                 return []
 
-            rev_path.append(best_pred)
+            path.append(best_pred)
             visited.add(best_pred)
             current = best_pred
 
-        if not rev_path or rev_path[-1] != self.start:
+        if not path or path[-1] != self.start:
             return []
 
-        rev_path.reverse()
-        return rev_path
+        path.reverse()
+        return path
 
     def plan(self, start: GridNode, goal: GridNode) -> Dict[str, object]:
         if not self._in_bounds(start) or not self._in_bounds(goal):
@@ -286,14 +299,15 @@ class LPAStarPathfinder:
 
         t0 = time.time()
 
-        if not self.initialized or self.start != start or self.goal != goal:
+        if not self.initialized or self.goal != goal:
             self._initialize(start, goal)
+        elif self.start != start:
+            self._shift_start(start)
 
         expanded_nodes, expanded_count = self._compute_shortest_path()
         path = self._extract_path()
 
         t1 = time.time()
-        gr, gc = goal
         success = len(path) > 0
 
         # Equation snapshot helps inspect the algorithm's internal calculation state.
@@ -307,7 +321,7 @@ class LPAStarPathfinder:
             "success": success,
             "path": path,
             "path_length": len(path),
-            "total_cost": self.g[gr][gc],
+            "total_cost": self._g(goal),
             "nodes_expanded": expanded_count,
             "expanded_nodes": expanded_nodes,
             "execution_time_ms": (t1 - t0) * 1000.0,
@@ -339,36 +353,43 @@ class LPAStarPathfinder:
             self.obstacle_grid[r][c] = is_blocked
             changed_cells.append(node)
 
-        affected: Set[GridNode] = set()
-        for node in changed_cells:
-            affected.add(node)
-            for nbr in self._neighbor_coords_all(node):
-                affected.add(nbr)
-
-        # For each changed incident edge (u, v), updating both endpoints keeps rhs values correct.
-        for node in affected:
-            self._update_vertex(node)
+        self.update_graph(changed_cells)
 
         result = self.plan(self.start, self.goal)
         result["changed_cells"] = changed_cells
         return result
+
+    def update_graph(self, changed_nodes: List[GridNode]) -> None:
+        if not changed_nodes:
+            return
+
+        # Deduplicate affected cells so each vertex is repaired at most once per update.
+        affected: Set[GridNode] = set()
+        for node in changed_nodes:
+            if not self._in_bounds(node):
+                continue
+            affected.add(node)
+            for nbr in self._neighbor_coords_all(node):
+                affected.add(nbr)
+
+        for node in affected:
+            self._update_vertex(node)
 
     def get_calculation_snapshot(self, nodes: List[GridNode]) -> List[Dict[str, object]]:
         out: List[Dict[str, object]] = []
         for node in nodes:
             if not self._in_bounds(node):
                 continue
-            r, c = node
             k1, k2 = self._calculate_key(node)
             h = self.heuristic(node, self.goal) if self.goal is not None else self.inf
             out.append(
                 {
                     "node": node,
-                    "g": self.g[r][c],
-                    "rhs": self.rhs[r][c],
+                    "g": self._g(node),
+                    "rhs": self._rhs(node),
                     "h": h,
                     "key": (k1, k2),
-                    "consistent": self.g[r][c] == self.rhs[r][c],
+                    "consistent": self._g(node) == self._rhs(node),
                 }
             )
         return out
