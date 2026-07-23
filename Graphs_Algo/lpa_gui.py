@@ -9,6 +9,7 @@ import random
 import tkinter as tk
 from datetime import datetime
 from tkinter import messagebox, ttk
+from tracemalloc import start
 from typing import Any
 
 import matplotlib
@@ -21,11 +22,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.colors import ListedColormap
 from matplotlib.figure import Figure
 
-try:
-    from Algo_LPA import LPAStarPathfinder
-except ImportError:
-    from .Algo_LPA import LPAStarPathfinder
-
+from Algo_LPA import LPAStarPathfinder, load_static_grid
 
 class LPAGUI:
     def __init__(self, root: tk.Tk) -> None:
@@ -300,34 +297,38 @@ class LPAGUI:
         self.draw_positions(cell_size)
 
     def generate_random_obstacles(
-        self,
-        rows: int,
-        cols: int,
-        start: tuple,
-        goal: tuple,
-        min_obstacles: int,
-    ) -> tuple:
-        max_attempts = 120
-        max_obstacles = int(rows * cols * 0.38)
-        min_obstacles = min(min_obstacles, max_obstacles)
-
-        for _ in range(max_attempts):
-            n_obs = random.randint(min_obstacles, max_obstacles)
-            obs = set()
-            while len(obs) < n_obs:
-                r = random.randint(0, rows - 1)
-                c = random.randint(0, cols - 1)
-                if (r, c) != start and (r, c) != goal:
-                    obs.add((r, c))
-
-            planner = LPAStarPathfinder((rows, cols), list(obs))
-            result = planner.plan(start, goal)
-            if result["success"]:
-                return list(obs), planner, result
-
-        fallback = []
-        planner = LPAStarPathfinder((rows, cols), fallback)
-        return fallback, planner, planner.plan(start, goal)
+            self,
+            rows: int,
+            cols: int,
+            start: tuple,
+            goal: tuple,
+            min_obstacles: int,
+        ) -> tuple:
+            max_attempts = 120
+            max_obstacles = int(rows * cols * 0.38)
+            min_obstacles = min(min_obstacles, max_obstacles)
+    
+            for _ in range(max_attempts):
+                n_obs = random.randint(min_obstacles, max_obstacles)
+                obs = []
+                while len(obs) < n_obs:
+                    r = random.randint(0, rows - 1)
+                    c = random.randint(0, cols - 1)
+                    if (r, c) != start and (r, c) != goal:
+                        obs.append((r, c))
+    
+                grid = load_static_grid(rows, cols, obs)
+                planner = LPAStarPathfinder(grid)
+                path = planner.plan(start, goal)
+    
+                if path:
+                    return obs, planner, {"success": True, "path": path}
+    
+            grid = load_static_grid(rows, cols, [])
+            planner = LPAStarPathfinder(grid)
+            path = planner.plan(start, goal)
+            return [], planner, {"success": bool(path), "path": path}
+    
 
     def choose_single_block_change(
         self,
@@ -351,7 +352,7 @@ class LPAGUI:
             predecessor = path[idx - 1]
             if block_cell == start or block_cell == goal:
                 continue
-            if planner.obstacle_grid[block_cell[0]][block_cell[1]]:
+            if planner.grid[block_cell[0]][block_cell[1]]:
                 continue
             return block_cell, predecessor
 
@@ -456,21 +457,6 @@ class LPAGUI:
         save_btn = ttk.Button(control, text="Save Final Figure", state="disabled")
         save_btn.pack(side=tk.RIGHT, padx=4)
 
-        state = {
-            "running": True,
-            "steps": 0,
-            "current_start": start,
-            "current_result": initial_result,
-            "display_result": initial_result,
-            "last_change": None,
-            "pending_start": None,
-            "pending_result": None,
-            "phase": "idle",
-            "phase_idx": 0,
-            "phase_expanded": [],
-            "phase_path": [],
-        }
-
         start_text: dict[str, Any | None] = {"artist": None}
         goal_text: dict[str, Any | None] = {"artist": None}
         change_marker: dict[str, Any | None] = {"artist": None}
@@ -489,7 +475,6 @@ class LPAGUI:
                 if node != state["current_start"] and node != goal and grid[node[0]][node[1]] != 1:
                     grid[node[0]][node[1]] = 3
 
-            # Animated search frontier in current cycle.
             if state["phase"] in ("expand", "path") and state["pending_result"] is not None:
                 for node in state["phase_expanded"][: state["phase_idx"]]:
                     if node != state["current_start"] and node != goal and grid[node[0]][node[1]] == 0:
@@ -546,125 +531,74 @@ class LPAGUI:
             )
             canvas.draw()
 
-        def stop_with_status(text: str, ok: bool) -> None:
-            state["running"] = False
-            status.set(text)
-            self.status_label.config(text=text, foreground="green" if ok else "red")
-            save_btn.config(
-                state="normal",
-                command=lambda: self.save_visualization(fig, initial_result, state["current_result"], window),
-            )
+        # 1. Define state EXACTLY ONCE with all required keys
+        state = {
+            "current_result": {"success": True, "path": planner.current_path()},
+            "display_result": {"success": True, "path": planner.current_path()},
+            "current_start": start,
+            "phase": "idle",
+            "phase_idx": 0,
+            "phase_expanded": [],
+            "phase_path": [],
+            "last_change": None,
+            "pending_result": None,
+            "steps": 0,
+        }
 
-        def tick() -> None:
-            if not state["running"]:
+        # 2. Define on_canvas_click EXACTLY ONCE
+        def on_canvas_click(event):
+            w = canvas.get_tk_widget()
+            if event.x is None or event.y is None:
                 return
 
-            if not state["current_result"].get("success", False):
-                render_frame()
-                stop_with_status("No path available. Live simulation stopped.", ok=False)
+            c = int(event.x // (w.winfo_width() / cols))
+            r = int(event.y // (w.winfo_height() / rows))
+
+            if not (0 <= r < rows and 0 <= c < cols):
+                return
+            if (r, c) == start or (r, c) == goal:
                 return
 
-            selection = self.choose_single_block_change(
-                state["current_result"].get("path", []),
-                planner,
-                state["current_start"],
-                goal,
-            )
+            if planner.grid[r][c]:
+                planner.grid[r][c] = False
+                obstacle_set.discard((r, c))
+            else:
+                planner.grid[r][c] = True
+                obstacle_set.add((r, c))
 
-            if selection is None:
-                render_frame()
-                stop_with_status("No valid next obstacle on path. Live simulation complete.", ok=True)
-                return
+            affected = [(r, c)]
+            for dr, dc in [(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(-1,1),(1,-1),(1,1)]:
+                nr, nc = r + dr, c + dc
+                if 0 <= nr < rows and 0 <= nc < cols:
+                    affected.append((nr, nc))
 
-            block_cell, replan_start = selection
+            for cell in affected:
+                planner.update_vertex(cell)
+            planner.compute_shortest_path()
 
-            # Replan only after a real obstacle addition.
-            if block_cell in obstacle_set:
-                render_frame()
-                status.set("Skipped replan: selected cell already blocked")
-                window.after(500, tick)
-                return
+            path = planner.current_path()
+            state["current_result"] = {"success": bool(path), "path": path}
+            state["display_result"] = state["current_result"]
+            state["current_start"] = start
+            state["steps"] += 1
 
-            planner.obstacle_grid[block_cell[0]][block_cell[1]] = True
-            obstacle_set.add(block_cell)
-            planner.update_graph([block_cell])
-
-            replanned_result = planner.plan(replan_start, goal)
-
-            # Prepare visible step-by-step animation for this replan cycle.
-            state["pending_start"] = replan_start
-            state["pending_result"] = replanned_result
-            state["last_change"] = block_cell
-            state["phase_expanded"] = replanned_result.get("expanded_nodes", [])
-            state["phase_path"] = replanned_result.get("path", [])
-            state["phase"] = "expand"
-            state["phase_idx"] = 0
-
-            status.set(
-                f"step {state['steps'] + 1}: obstacle at {block_cell}, animating replan from {replan_start}"
-            )
-            self.status_label.config(
-                text=f"Live: obstacle {block_cell} added, replanning from {replan_start}",
-                foreground="blue",
-            )
             render_frame()
-            window.after(40, animate_cycle)
+            canvas.draw()
 
-        def animate_cycle() -> None:
-            if not state["running"]:
-                return
+            if path:
+                status.set(f"({r},{c}) → cost {planner.g[goal]:.2f}  len {len(path)}")
+            else:
+                status.set(f"({r},{c}) → NO PATH")
 
-            phase = state["phase"]
-            if phase == "expand":
-                if state["phase_idx"] < len(state["phase_expanded"]):
-                    state["phase_idx"] += 1
-                    render_frame()
-                    window.after(22, animate_cycle)
-                    return
+        # 3. Bind the click event to the canvas
+        tk_canvas = canvas.get_tk_widget()
+        tk_canvas.bind("<Button-1>", on_canvas_click)
 
-                state["phase"] = "path"
-                state["phase_idx"] = 0
-                render_frame()
-                window.after(80, animate_cycle)
-                return
-
-            if phase == "path":
-                if state["phase_idx"] < len(state["phase_path"]):
-                    state["phase_idx"] += 1
-                    render_frame()
-                    window.after(45, animate_cycle)
-                    return
-
-                # Commit completed cycle.
-                state["current_start"] = state["pending_start"]
-                state["current_result"] = state["pending_result"]
-                state["display_result"] = state["pending_result"]
-                state["steps"] += 1
-                state["phase"] = "idle"
-                state["phase_idx"] = 0
-                render_frame()
-
-                status.set(
-                    f"step {state['steps']}: replanned from predecessor {state['current_start']}"
-                )
-                self.status_label.config(
-                    text=f"Live step {state['steps']} complete",
-                    foreground="blue",
-                )
-
-                if not state["current_result"].get("success", False):
-                    stop_with_status("Path blocked after latest obstacle. Live simulation stopped.", ok=False)
-                    return
-
-                window.after(420, tick)
-                return
-
+        # 4. Render the initial frame
         render_frame()
-        window.after(700, tick)
 
-        def on_close() -> None:
-            state["running"] = False
-            plt.close(fig)
+        # 5. Handle window closing gracefully
+        def on_close():
             window.destroy()
 
         window.protocol("WM_DELETE_WINDOW", on_close)
@@ -698,7 +632,6 @@ class LPAGUI:
             )
         except Exception as exc:
             messagebox.showerror("Error", f"Could not save figure: {exc}", parent=parent)
-
 
 def main() -> None:
     root = tk.Tk()

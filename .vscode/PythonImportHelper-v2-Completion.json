@@ -1,0 +1,574 @@
+[
+    {
+        "label": "time",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "time",
+        "description": "time",
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "math",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "math",
+        "description": "math",
+        "detail": "math",
+        "documentation": {}
+    },
+    {
+        "label": "heapq",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "heapq",
+        "description": "heapq",
+        "detail": "heapq",
+        "documentation": {}
+    },
+    {
+        "label": "matplotlib.pyplot",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "matplotlib.pyplot",
+        "description": "matplotlib.pyplot",
+        "detail": "matplotlib.pyplot",
+        "documentation": {}
+    },
+    {
+        "label": "matplotlib.patches",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "matplotlib.patches",
+        "description": "matplotlib.patches",
+        "detail": "matplotlib.patches",
+        "documentation": {}
+    },
+    {
+        "label": "ListedColormap",
+        "importPath": "matplotlib.colors",
+        "description": "matplotlib.colors",
+        "isExtraImport": true,
+        "detail": "matplotlib.colors",
+        "documentation": {}
+    },
+    {
+        "label": "ListedColormap",
+        "importPath": "matplotlib.colors",
+        "description": "matplotlib.colors",
+        "isExtraImport": true,
+        "detail": "matplotlib.colors",
+        "documentation": {}
+    },
+    {
+        "label": "ListedColormap",
+        "importPath": "matplotlib.colors",
+        "description": "matplotlib.colors",
+        "isExtraImport": true,
+        "detail": "matplotlib.colors",
+        "documentation": {}
+    },
+    {
+        "label": "ListedColormap",
+        "importPath": "matplotlib.colors",
+        "description": "matplotlib.colors",
+        "isExtraImport": true,
+        "detail": "matplotlib.colors",
+        "documentation": {}
+    },
+    {
+        "label": "ListedColormap",
+        "importPath": "matplotlib.colors",
+        "description": "matplotlib.colors",
+        "isExtraImport": true,
+        "detail": "matplotlib.colors",
+        "documentation": {}
+    },
+    {
+        "label": "ListedColormap",
+        "importPath": "matplotlib.colors",
+        "description": "matplotlib.colors",
+        "isExtraImport": true,
+        "detail": "matplotlib.colors",
+        "documentation": {}
+    },
+    {
+        "label": "ListedColormap",
+        "importPath": "matplotlib.colors",
+        "description": "matplotlib.colors",
+        "isExtraImport": true,
+        "detail": "matplotlib.colors",
+        "documentation": {}
+    },
+    {
+        "label": "numpy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "numpy",
+        "description": "numpy",
+        "detail": "numpy",
+        "documentation": {}
+    },
+    {
+        "label": "tkinter",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "ttk",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "messagebox",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "filedialog",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "ttk",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "messagebox",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "filedialog",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "messagebox",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "ttk",
+        "importPath": "tkinter",
+        "description": "tkinter",
+        "isExtraImport": true,
+        "detail": "tkinter",
+        "documentation": {}
+    },
+    {
+        "label": "matplotlib",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "matplotlib",
+        "description": "matplotlib",
+        "detail": "matplotlib",
+        "documentation": {}
+    },
+    {
+        "label": "FuncAnimation",
+        "importPath": "matplotlib.animation",
+        "description": "matplotlib.animation",
+        "isExtraImport": true,
+        "detail": "matplotlib.animation",
+        "documentation": {}
+    },
+    {
+        "label": "FuncAnimation",
+        "importPath": "matplotlib.animation",
+        "description": "matplotlib.animation",
+        "isExtraImport": true,
+        "detail": "matplotlib.animation",
+        "documentation": {}
+    },
+    {
+        "label": "FuncAnimation",
+        "importPath": "matplotlib.animation",
+        "description": "matplotlib.animation",
+        "isExtraImport": true,
+        "detail": "matplotlib.animation",
+        "documentation": {}
+    },
+    {
+        "label": "FuncAnimation",
+        "importPath": "matplotlib.animation",
+        "description": "matplotlib.animation",
+        "isExtraImport": true,
+        "detail": "matplotlib.animation",
+        "documentation": {}
+    },
+    {
+        "label": "random",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "random",
+        "description": "random",
+        "detail": "random",
+        "documentation": {}
+    },
+    {
+        "label": "AStarPathfinder",
+        "importPath": "Algo_AStar",
+        "description": "Algo_AStar",
+        "isExtraImport": true,
+        "detail": "Algo_AStar",
+        "documentation": {}
+    },
+    {
+        "label": "AStarPathfinder",
+        "importPath": "Algo_AStar",
+        "description": "Algo_AStar",
+        "isExtraImport": true,
+        "detail": "Algo_AStar",
+        "documentation": {}
+    },
+    {
+        "label": "DijkstraPathfinder",
+        "importPath": "Algo_Dij",
+        "description": "Algo_Dij",
+        "isExtraImport": true,
+        "detail": "Algo_Dij",
+        "documentation": {}
+    },
+    {
+        "label": "DijkstraPathfinder",
+        "importPath": "Algo_Dij",
+        "description": "Algo_Dij",
+        "isExtraImport": true,
+        "detail": "Algo_Dij",
+        "documentation": {}
+    },
+    {
+        "label": "FigureCanvasTkAgg",
+        "importPath": "matplotlib.backends.backend_tkagg",
+        "description": "matplotlib.backends.backend_tkagg",
+        "isExtraImport": true,
+        "detail": "matplotlib.backends.backend_tkagg",
+        "documentation": {}
+    },
+    {
+        "label": "FigureCanvasTkAgg",
+        "importPath": "matplotlib.backends.backend_tkagg",
+        "description": "matplotlib.backends.backend_tkagg",
+        "isExtraImport": true,
+        "detail": "matplotlib.backends.backend_tkagg",
+        "documentation": {}
+    },
+    {
+        "label": "FigureCanvasTkAgg",
+        "importPath": "matplotlib.backends.backend_tkagg",
+        "description": "matplotlib.backends.backend_tkagg",
+        "isExtraImport": true,
+        "detail": "matplotlib.backends.backend_tkagg",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Figure",
+        "importPath": "matplotlib.figure",
+        "description": "matplotlib.figure",
+        "isExtraImport": true,
+        "detail": "matplotlib.figure",
+        "documentation": {}
+    },
+    {
+        "label": "AStarPathfinder",
+        "kind": 6,
+        "importPath": "Graphs_Algo.Algo_AStar",
+        "description": "Graphs_Algo.Algo_AStar",
+        "peekOfCode": "class AStarPathfinder:\n    \"\"\"\n    Optimized A* Algorithm Implementation\n    Uses a binary heap priority queue for faster open-list operations.\n    Supports 8-direction movement with configurable straight/diagonal costs.\n    \"\"\"\n    def __init__(self, grid, obstacles, straight_cost=1.0, diagonal_cost=math.sqrt(2.0)):\n        \"\"\"\n        Initialize with grid dimensions and obstacles\n        grid: (rows, cols) tuple",
+        "detail": "Graphs_Algo.Algo_AStar",
+        "documentation": {}
+    },
+    {
+        "label": "visualize_pathfinding",
+        "kind": 2,
+        "importPath": "Graphs_Algo.Algo_AStar",
+        "description": "Graphs_Algo.Algo_AStar",
+        "peekOfCode": "def visualize_pathfinding(rows, cols, obstacles, start, goal, result):\n    \"\"\"\n    Visualize the pathfinding process using matplotlib\n    \"\"\"\n    # Create figure and axis\n    fig, ax = plt.subplots(figsize=(12, 10))\n    # Create grid visualization\n    grid = np.zeros((rows, cols))\n    # Mark obstacles (value = 1)\n    for obs in obstacles:",
+        "detail": "Graphs_Algo.Algo_AStar",
+        "documentation": {}
+    },
+    {
+        "label": "run_astar_analysis",
+        "kind": 2,
+        "importPath": "Graphs_Algo.Algo_AStar",
+        "description": "Graphs_Algo.Algo_AStar",
+        "peekOfCode": "def run_astar_analysis():\n    \"\"\"\n    Main function to run A* algorithm with user input\n    \"\"\"\n    print(\"\\n\" + \"=\" * 80)\n    print(\"A* ALGORITHM - PATH FINDING RESEARCH ANALYSIS\")\n    print(\"=\" * 80)\n    print(\"Straight Move Cost: 1.0\")\n    print(f\"Diagonal Move Cost: {math.sqrt(2.0):.4f}\")\n    print(\"Movement: 8-directional (up, down, left, right + diagonals)\")",
+        "detail": "Graphs_Algo.Algo_AStar",
+        "documentation": {}
+    },
+    {
+        "label": "Node",
+        "kind": 6,
+        "importPath": "Graphs_Algo.Algo_Dij",
+        "description": "Graphs_Algo.Algo_Dij",
+        "peekOfCode": "class Node:\n    \"\"\"Simple linked list node for queue implementation\"\"\"\n    def __init__(self, data, cost):\n        self.data = data\n        self.cost = cost\n        self.next = None\nclass SimpleQueue:\n    \"\"\"Basic linked list queue for Dijkstra's algorithm\"\"\"\n    def __init__(self):\n        self.head = None",
+        "detail": "Graphs_Algo.Algo_Dij",
+        "documentation": {}
+    },
+    {
+        "label": "SimpleQueue",
+        "kind": 6,
+        "importPath": "Graphs_Algo.Algo_Dij",
+        "description": "Graphs_Algo.Algo_Dij",
+        "peekOfCode": "class SimpleQueue:\n    \"\"\"Basic linked list queue for Dijkstra's algorithm\"\"\"\n    def __init__(self):\n        self.head = None\n        self.size = 0\n    def is_empty(self):\n        return self.head is None\n    def insert(self, data, cost):\n        \"\"\"Insert node in sorted order by cost\"\"\"\n        new_node = Node(data, cost)",
+        "detail": "Graphs_Algo.Algo_Dij",
+        "documentation": {}
+    },
+    {
+        "label": "DijkstraPathfinder",
+        "kind": 6,
+        "importPath": "Graphs_Algo.Algo_Dij",
+        "description": "Graphs_Algo.Algo_Dij",
+        "peekOfCode": "class DijkstraPathfinder:\n    \"\"\"\n    Optimized Dijkstra's Algorithm Implementation\n    Unit cost: 1 for all paths\n    Uses only arrays and linked lists\n    \"\"\"\n    def __init__(self, grid, obstacles):\n        \"\"\"\n        Initialize with grid dimensions and obstacles\n        grid: (rows, cols) tuple",
+        "detail": "Graphs_Algo.Algo_Dij",
+        "documentation": {}
+    },
+    {
+        "label": "visualize_pathfinding",
+        "kind": 2,
+        "importPath": "Graphs_Algo.Algo_Dij",
+        "description": "Graphs_Algo.Algo_Dij",
+        "peekOfCode": "def visualize_pathfinding(rows, cols, obstacles, start, goal, result):\n    \"\"\"\n    Visualize the pathfinding process using matplotlib\n    \"\"\"\n    # Create figure and axis\n    fig, ax = plt.subplots(figsize=(12, 10))\n    # Create grid visualization\n    grid = np.zeros((rows, cols))\n    # Mark obstacles (value = 1)\n    for obs in obstacles:",
+        "detail": "Graphs_Algo.Algo_Dij",
+        "documentation": {}
+    },
+    {
+        "label": "run_dijkstra_analysis",
+        "kind": 2,
+        "importPath": "Graphs_Algo.Algo_Dij",
+        "description": "Graphs_Algo.Algo_Dij",
+        "peekOfCode": "def run_dijkstra_analysis():\n    \"\"\"\n    Main function to run Dijkstra's algorithm with user input\n    \"\"\"\n    print(\"\\n\" + \"=\" * 80)\n    print(\"DIJKSTRA'S ALGORITHM - PATH FINDING RESEARCH ANALYSIS\")\n    print(\"=\" * 80)\n    print(\"Unit Cost: 1 (fixed for all movements)\")\n    print(\"Movement: 4-directional (up, down, left, right)\")\n    print(\"=\" * 80)",
+        "detail": "Graphs_Algo.Algo_Dij",
+        "documentation": {}
+    },
+    {
+        "label": "LPAStarPathfinder",
+        "kind": 6,
+        "importPath": "Graphs_Algo.Algo_LPA",
+        "description": "Graphs_Algo.Algo_LPA",
+        "peekOfCode": "class LPAStarPathfinder:\n        \"\"\"\n        Lifelong Planning A* on an 8‑connected grid.\n        The grid is a 2‑D list of booleans (False=free, True=blocked).\n        \"\"\"\n        def init(self, grid):\n            self.grid = grid\n            self.rows = len(grid)\n            self.cols = len(grid[0]) if self.rows else 0\n            self.inf = float('inf')",
+        "detail": "Graphs_Algo.Algo_LPA",
+        "documentation": {}
+    },
+    {
+        "label": "LPAViewer",
+        "kind": 6,
+        "importPath": "Graphs_Algo.Algo_LPA",
+        "description": "Graphs_Algo.Algo_LPA",
+        "peekOfCode": "class LPAViewer(tk.Tk):\n        \"\"\"\n        Window that visualises the grid, the current LPA* path,\n        and lets the user click cells to toggle obstacles.\n        \"\"\"\n        def __init__(self,\n                    rows,\n                    cols,\n                    start,\n                    goal,",
+        "detail": "Graphs_Algo.Algo_LPA",
+        "documentation": {}
+    },
+    {
+        "label": "load_static_grid",
+        "kind": 2,
+        "importPath": "Graphs_Algo.Algo_LPA",
+        "description": "Graphs_Algo.Algo_LPA",
+        "peekOfCode": "def load_static_grid(rows: int, cols: int, obstacles=None):\n        \"\"\"\n        Build a rows×cols boolean matrix.\n        False = free cell, True = blocked obstacle.\n        obstacles is an optional iterable of (r, c) tuples.\n        \"\"\"\n        if obstacles is None:\n            obstacles = []\n        grid = [[False for _ in range(cols)] for _ in range(rows)]\n        for r, c in obstacles:",
+        "detail": "Graphs_Algo.Algo_LPA",
+        "documentation": {}
+    },
+    {
+        "label": "ask_int",
+        "kind": 2,
+        "importPath": "Graphs_Algo.Algo_LPA",
+        "description": "Graphs_Algo.Algo_LPA",
+        "peekOfCode": "def ask_int(prompt, min_val=1):\n    \"\"\"Prompt until the user enters an integer >= min_val.\"\"\"\n    while True:\n        try:\n            val = int(input(prompt))\n            if val >= min_val:\n                return val\n            print(f\"Please enter an integer >= {min_val}.\")\n        except ValueError:\n            print(\"That doesn't look like an integer – try again.\")",
+        "detail": "Graphs_Algo.Algo_LPA",
+        "documentation": {}
+    },
+    {
+        "label": "ask_obstacle_list",
+        "kind": 2,
+        "importPath": "Graphs_Algo.Algo_LPA",
+        "description": "Graphs_Algo.Algo_LPA",
+        "peekOfCode": "def ask_obstacle_list(rows, cols):\n    \"\"\"\n        Let the user type obstacle coordinates.\n        Example input: 1,2 3,4 0,0   (press ENTER on an empty line when done)\n    \"\"\"\n    print(\"\\nEnter obstacle coordinates (row,col) separated by spaces.\")\n    print(\"Example: 1,2 3,4 0,0   (press ENTER when done)\")\n    line = input(\"> \").strip()\n    if not line:\n        return []                     # no obstacles",
+        "detail": "Graphs_Algo.Algo_LPA",
+        "documentation": {}
+    },
+    {
+        "label": "CELL_SIZE",
+        "kind": 5,
+        "importPath": "Graphs_Algo.Algo_LPA",
+        "description": "Graphs_Algo.Algo_LPA",
+        "peekOfCode": "CELL_SIZE = 60          # pixel size of one cell (keep constant for simplicity)\nclass LPAViewer(tk.Tk):\n        \"\"\"\n        Window that visualises the grid, the current LPA* path,\n        and lets the user click cells to toggle obstacles.\n        \"\"\"\n        def __init__(self,\n                    rows,\n                    cols,\n                    start,",
+        "detail": "Graphs_Algo.Algo_LPA",
+        "documentation": {}
+    },
+    {
+        "label": "generate_random_obstacles",
+        "kind": 2,
+        "importPath": "Graphs_Algo.animate_astar",
+        "description": "Graphs_Algo.animate_astar",
+        "peekOfCode": "def generate_random_obstacles(rows, cols, start, goal, min_obstacles=20):\n    \"\"\"Generate random obstacles ensuring path exists\"\"\"\n    max_attempts = 100\n    for attempt in range(max_attempts):\n        # Generate random number of obstacles (between min_obstacles and 35% of grid)\n        num_obstacles = random.randint(min_obstacles, int(rows * cols * 0.35))\n        obstacles = []\n        # Generate random positions\n        while len(obstacles) < num_obstacles:\n            r = random.randint(0, rows - 1)",
+        "detail": "Graphs_Algo.animate_astar",
+        "documentation": {}
+    },
+    {
+        "label": "animate_pathfinding",
+        "kind": 2,
+        "importPath": "Graphs_Algo.animate_astar",
+        "description": "Graphs_Algo.animate_astar",
+        "peekOfCode": "def animate_pathfinding():\n    \"\"\"Create animated visualization of pathfinding\"\"\"\n    # Fixed positions\n    start = (0, 0)\n    goal = (9, 9)\n    print(\"=\" * 80)\n    print(\"ANIMATED A* ALGORITHM VISUALIZATION\")\n    print(\"=\" * 80)\n    print(f\"\\nGrid Size: {ROWS}x{COLS} (FIXED)\")\n    print(f\"Start: {start} | Goal: {goal}\")",
+        "detail": "Graphs_Algo.animate_astar",
+        "documentation": {}
+    },
+    {
+        "label": "MIN_OBSTACLES",
+        "kind": 5,
+        "importPath": "Graphs_Algo.animate_astar",
+        "description": "Graphs_Algo.animate_astar",
+        "peekOfCode": "MIN_OBSTACLES = 20\ndef generate_random_obstacles(rows, cols, start, goal, min_obstacles=20):\n    \"\"\"Generate random obstacles ensuring path exists\"\"\"\n    max_attempts = 100\n    for attempt in range(max_attempts):\n        # Generate random number of obstacles (between min_obstacles and 35% of grid)\n        num_obstacles = random.randint(min_obstacles, int(rows * cols * 0.35))\n        obstacles = []\n        # Generate random positions\n        while len(obstacles) < num_obstacles:",
+        "detail": "Graphs_Algo.animate_astar",
+        "documentation": {}
+    },
+    {
+        "label": "generate_random_obstacles",
+        "kind": 2,
+        "importPath": "Graphs_Algo.animate_dijkstra",
+        "description": "Graphs_Algo.animate_dijkstra",
+        "peekOfCode": "def generate_random_obstacles(rows, cols, start, goal, min_obstacles=20):\n    \"\"\"Generate random obstacles ensuring path exists\"\"\"\n    max_attempts = 100\n    for attempt in range(max_attempts):\n        # Generate random number of obstacles (between min_obstacles and 35% of grid)\n        num_obstacles = random.randint(min_obstacles, int(rows * cols * 0.35))\n        obstacles = []\n        # Generate random positions\n        while len(obstacles) < num_obstacles:\n            r = random.randint(0, rows - 1)",
+        "detail": "Graphs_Algo.animate_dijkstra",
+        "documentation": {}
+    },
+    {
+        "label": "animate_pathfinding",
+        "kind": 2,
+        "importPath": "Graphs_Algo.animate_dijkstra",
+        "description": "Graphs_Algo.animate_dijkstra",
+        "peekOfCode": "def animate_pathfinding():\n    \"\"\"Create animated visualization of pathfinding\"\"\"\n    # Fixed positions\n    start = (0, 0)\n    goal = (9, 9)\n    print(\"=\" * 80)\n    print(\"ANIMATED DIJKSTRA'S ALGORITHM VISUALIZATION\")\n    print(\"=\" * 80)\n    print(f\"\\nGrid Size: {ROWS}x{COLS} (FIXED)\")\n    print(f\"Start: {start} | Goal: {goal}\")",
+        "detail": "Graphs_Algo.animate_dijkstra",
+        "documentation": {}
+    },
+    {
+        "label": "MIN_OBSTACLES",
+        "kind": 5,
+        "importPath": "Graphs_Algo.animate_dijkstra",
+        "description": "Graphs_Algo.animate_dijkstra",
+        "peekOfCode": "MIN_OBSTACLES = 20\ndef generate_random_obstacles(rows, cols, start, goal, min_obstacles=20):\n    \"\"\"Generate random obstacles ensuring path exists\"\"\"\n    max_attempts = 100\n    for attempt in range(max_attempts):\n        # Generate random number of obstacles (between min_obstacles and 35% of grid)\n        num_obstacles = random.randint(min_obstacles, int(rows * cols * 0.35))\n        obstacles = []\n        # Generate random positions\n        while len(obstacles) < num_obstacles:",
+        "detail": "Graphs_Algo.animate_dijkstra",
+        "documentation": {}
+    },
+    {
+        "label": "AStarGUI",
+        "kind": 6,
+        "importPath": "Graphs_Algo.astar_gui",
+        "description": "Graphs_Algo.astar_gui",
+        "peekOfCode": "class AStarGUI:\n    def __init__(self, root):\n        self.root = root\n        self.root.title(\"A* Algorithm Visualizer\")\n        self.root.geometry(\"1200x800\")\n        # Default values\n        self.rows = tk.IntVar(value=10)\n        self.cols = tk.IntVar(value=10)\n        self.start_row = tk.IntVar(value=0)\n        self.start_col = tk.IntVar(value=0)",
+        "detail": "Graphs_Algo.astar_gui",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "Graphs_Algo.astar_gui",
+        "description": "Graphs_Algo.astar_gui",
+        "peekOfCode": "def main():\n    root = tk.Tk()\n    app = AStarGUI(root)\n    root.mainloop()\nif __name__ == \"__main__\":\n    main()",
+        "detail": "Graphs_Algo.astar_gui",
+        "documentation": {}
+    },
+    {
+        "label": "DijkstraGUI",
+        "kind": 6,
+        "importPath": "Graphs_Algo.dijkstra_gui",
+        "description": "Graphs_Algo.dijkstra_gui",
+        "peekOfCode": "class DijkstraGUI:\n    def __init__(self, root):\n        self.root = root\n        self.root.title(\"Dijkstra's Algorithm Visualizer\")\n        self.root.geometry(\"1200x800\")\n        # Default values\n        self.rows = tk.IntVar(value=10)\n        self.cols = tk.IntVar(value=10)\n        self.start_row = tk.IntVar(value=0)\n        self.start_col = tk.IntVar(value=0)",
+        "detail": "Graphs_Algo.dijkstra_gui",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "Graphs_Algo.dijkstra_gui",
+        "description": "Graphs_Algo.dijkstra_gui",
+        "peekOfCode": "def main():\n    root = tk.Tk()\n    app = DijkstraGUI(root)\n    root.mainloop()\nif __name__ == \"__main__\":\n    main()",
+        "detail": "Graphs_Algo.dijkstra_gui",
+        "documentation": {}
+    },
+    {
+        "label": "LPAGUI",
+        "kind": 6,
+        "importPath": "Graphs_Algo.lpa_gui",
+        "description": "Graphs_Algo.lpa_gui",
+        "peekOfCode": "class LPAGUI:\n    def __init__(self, root: tk.Tk) -> None:\n        self.root = root\n        self.root.title(\"LPA* Algorithm Visualizer\")\n        self.root.geometry(\"1250x820\")\n        self.rows = tk.IntVar(value=20)\n        self.cols = tk.IntVar(value=20)\n        self.start_row = tk.IntVar(value=0)\n        self.start_col = tk.IntVar(value=0)\n        self.goal_row = tk.IntVar(value=19)",
+        "detail": "Graphs_Algo.lpa_gui",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "Graphs_Algo.lpa_gui",
+        "description": "Graphs_Algo.lpa_gui",
+        "peekOfCode": "def main() -> None:\n    root = tk.Tk()\n    app = LPAGUI(root)\n    root.mainloop()\nif __name__ == \"__main__\":\n    main()",
+        "detail": "Graphs_Algo.lpa_gui",
+        "documentation": {}
+    }
+]
