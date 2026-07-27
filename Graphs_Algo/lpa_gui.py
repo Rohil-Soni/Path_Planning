@@ -12,6 +12,8 @@ from tkinter import messagebox, ttk
 from tracemalloc import start
 from typing import Any
 
+import math
+
 import matplotlib
 
 matplotlib.use("TkAgg")
@@ -23,6 +25,9 @@ from matplotlib.colors import ListedColormap
 from matplotlib.figure import Figure
 
 from Algo_LPA import LPAStarPathfinder, load_static_grid
+
+def render_frame(state):
+    raise NotImplementedError
 
 class LPAGUI:
     def __init__(self, root: tk.Tk) -> None:
@@ -297,37 +302,38 @@ class LPAGUI:
         self.draw_positions(cell_size)
 
     def generate_random_obstacles(
-            self,
-            rows: int,
-            cols: int,
-            start: tuple,
-            goal: tuple,
-            min_obstacles: int,
-        ) -> tuple:
-            max_attempts = 120
-            max_obstacles = int(rows * cols * 0.38)
-            min_obstacles = min(min_obstacles, max_obstacles)
+        self,
+        rows: int,
+        cols: int,
+        start: tuple,
+        goal: tuple,
+        min_obstacles: int,
+    ) -> tuple:
+        max_attempts = 120
+        max_obstacles = int(rows * cols * 0.38)
+        min_obstacles = min(min_obstacles, max_obstacles)
     
-            for _ in range(max_attempts):
-                n_obs = random.randint(min_obstacles, max_obstacles)
-                obs = []
-                while len(obs) < n_obs:
-                    r = random.randint(0, rows - 1)
-                    c = random.randint(0, cols - 1)
-                    if (r, c) != start and (r, c) != goal:
-                        obs.append((r, c))
+        for _ in range(max_attempts):
+            n_obs = random.randint(min_obstacles, max_obstacles)
+            obs = []
+            while len(obs) < n_obs:
+                r = random.randint(0, rows - 1)
+                c = random.randint(0, cols - 1)
+                if (r, c) != start and (r, c) != goal:
+                    obs.append((r, c))
     
-                grid = load_static_grid(rows, cols, obs)
-                planner = LPAStarPathfinder(grid)
-                path = planner.plan(start, goal)
-    
-                if path:
-                    return obs, planner, {"success": True, "path": path}
-    
-            grid = load_static_grid(rows, cols, [])
+            grid = load_static_grid(rows, cols, obs)
             planner = LPAStarPathfinder(grid)
             path = planner.plan(start, goal)
-            return [], planner, {"success": bool(path), "path": path}
+    
+            if path:
+                return obs, planner, {"success": True, "path": path}
+    
+        grid = load_static_grid(rows, cols, [])
+        planner = LPAStarPathfinder(grid)
+        path = planner.plan(start, goal)
+        # Ensure 'result' is always a dict with 'success' and 'path'
+        return [], planner, {"success": bool(path), "path": path, "nodes_expanded": 0, "total_cost": float('inf')}
     
 
     def choose_single_block_change(
@@ -372,26 +378,25 @@ class LPAGUI:
         self.root.update()
 
         try:
-            obstacles, planner, initial_result = self.generate_random_obstacles(
+            # Generate obstacles
+            obstacles, planner, result = self.generate_random_obstacles(
                 rows, cols, start, goal, self.min_obstacles.get()
             )
-            if not initial_result["success"]:
-                messagebox.showerror("Error", "Failed to build a valid initial path.")
-                self.status_label.config(text="No valid initial path.", foreground="red")
+    
+            if not result['success']:
+                messagebox.showerror("Error", "No path found!")
+                self.status_label.config(text="Failed: No path found", foreground="red")
                 return
-
-            obstacle_set = set(obstacles)
-            self.status_label.config(text="Starting live replanning...", foreground="blue")
-            self.root.update()
-
+    
+            # Call create_live_simulation
             self.create_live_simulation(
                 rows=rows,
                 cols=cols,
                 start=start,
                 goal=goal,
                 planner=planner,
-                obstacle_set=obstacle_set,
-                initial_result=initial_result,
+                obstacle_set=set(obstacles), # Pass obstacle_set here
+                initial_result=result,       # Pass the 'result' here
             )
 
             self.status_label.config(text="Live simulation window opened.", foreground="green")
@@ -416,7 +421,6 @@ class LPAGUI:
 
         fig, ax = plt.subplots(1, 1, figsize=(10.2, 7.0))
 
-        # 0 empty, 1 obstacle, 2 expanded, 3 path, 4 start, 5 goal, 6 animated frontier
         colors = ["white", "#2f2f2f", "#9fd2f5", "#1f9d4c", "#d93636", "#ffd24d", "#b553d6"]
         cmap = ListedColormap(colors)
 
@@ -431,7 +435,6 @@ class LPAGUI:
         ax.set_yticks(np.arange(0, rows, 1))
         ax.set_xlabel("Column")
         ax.set_ylabel("Row")
-
         ax.set_title("Live Replanning", fontweight="bold")
 
         legend_items = [
@@ -461,32 +464,51 @@ class LPAGUI:
         goal_text: dict[str, Any | None] = {"artist": None}
         change_marker: dict[str, Any | None] = {"artist": None}
 
+        state = {
+            "current_result": initial_result,
+            "display_result": initial_result,
+            "current_start": start,
+            "goal": goal,
+            "phase": "idle",
+            "phase_idx": 0,
+            "phase_expanded": [],
+            "phase_path": [],
+            "last_change": None,
+            "pending_result": None,
+            "steps": 0,
+            "animating": False,
+            "current_idx": 0,
+            "expanded_to_draw": [],
+            "path_to_draw": [],
+        }
+
         def render_frame() -> None:
-            grid[:, :] = 0
+            grid.fill(0)
 
-            for r, c in obstacle_set:
-                grid[r][c] = 1
+            for r_idx, c_idx in obstacle_set:
+                if 0 <= r_idx < rows and 0 <= c_idx < cols:
+                    grid[r_idx, c_idx] = 1
 
-            for node in state["display_result"].get("expanded_nodes", []):
-                if node != state["current_start"] and node != goal and grid[node[0]][node[1]] == 0:
-                    grid[node[0]][node[1]] = 2
+            if state["animating"]:
+                if state["phase"] == "expand":
+                    for node in state["expanded_to_draw"][: state["current_idx"]]:
+                        if node != start and node != goal and grid[node[0], node[1]] == 0:
+                            grid[node[0], node[1]] = 2
+                elif state["phase"] == "path":
+                    for node in state["expanded_to_draw"]:
+                        if node != start and node != goal and grid[node[0], node[1]] == 0:
+                            grid[node[0], node[1]] = 2
+                    for node in state["path_to_draw"][: state["current_idx"]]:
+                        if node != start and node != goal and grid[node[0], node[1]] != 1:
+                            grid[node[0], node[1]] = 3
+            else:
+                path = planner.current_path()
+                for node in path:
+                    if node != start and node != goal and grid[node[0], node[1]] != 1:
+                        grid[node[0], node[1]] = 3
 
-            for node in state["display_result"].get("path", []):
-                if node != state["current_start"] and node != goal and grid[node[0]][node[1]] != 1:
-                    grid[node[0]][node[1]] = 3
-
-            if state["phase"] in ("expand", "path") and state["pending_result"] is not None:
-                for node in state["phase_expanded"][: state["phase_idx"]]:
-                    if node != state["current_start"] and node != goal and grid[node[0]][node[1]] == 0:
-                        grid[node[0]][node[1]] = 6
-
-                if state["phase"] == "path":
-                    for node in state["phase_path"][: state["phase_idx"]]:
-                        if node != state["current_start"] and node != goal and grid[node[0]][node[1]] != 1:
-                            grid[node[0]][node[1]] = 3
-
-            grid[state["current_start"][0]][state["current_start"][1]] = 4
-            grid[goal[0]][goal[1]] = 5
+            grid[start[0], start[1]] = 4
+            grid[goal[0], goal[1]] = 5
 
             im.set_array(grid)
 
@@ -499,8 +521,8 @@ class LPAGUI:
                 change_marker["artist"] = None
 
             start_text["artist"] = ax.text(
-                state["current_start"][1],
-                state["current_start"][0],
+                start[1],
+                start[0],
                 "S",
                 ha="center",
                 va="center",
@@ -524,35 +546,54 @@ class LPAGUI:
                 )
 
             ax.set_title(
-                f"Live Replanning | step={state['steps']} | "
-                f"expanded={state['display_result'].get('nodes_expanded', 0)} | "
-                f"cost={state['display_result'].get('total_cost', float('inf')):.2f}",
+                f"LPA* Demo | Step={state['steps']} | "
+                f"Expanded={len(state['expanded_to_draw']) if state['expanded_to_draw'] else 0} | "
+                f"Cost={planner.g[goal]:.2f}",
                 fontweight="bold",
             )
             canvas.draw()
 
-        # 1. Define state EXACTLY ONCE with all required keys
-        state = {
-            "current_result": {"success": True, "path": planner.current_path()},
-            "display_result": {"success": True, "path": planner.current_path()},
-            "current_start": start,
-            "phase": "idle",
-            "phase_idx": 0,
-            "phase_expanded": [],
-            "phase_path": [],
-            "last_change": None,
-            "pending_result": None,
-            "steps": 0,
-        }
-
-        # 2. Define on_canvas_click EXACTLY ONCE
-        def on_canvas_click(event):
-            w = canvas.get_tk_widget()
-            if event.x is None or event.y is None:
+        def run_animation_step() -> None:
+            if not state["animating"]:
                 return
 
-            c = int(event.x // (w.winfo_width() / cols))
-            r = int(event.y // (w.winfo_height() / rows))
+            if state["phase"] == "expand":
+                if state["current_idx"] < len(state["expanded_to_draw"]):
+                    state["current_idx"] += 1
+                    render_frame()
+                    window.after(20, run_animation_step)
+                    return
+
+                state["phase"] = "path"
+                state["current_idx"] = 0
+                render_frame()
+                window.after(150, run_animation_step)
+                return
+
+            if state["phase"] == "path":
+                if state["current_idx"] < len(state["path_to_draw"]):
+                    state["current_idx"] += 1
+                    render_frame()
+                    window.after(40, run_animation_step)
+                    return
+
+                state["phase"] = "idle"
+                state["animating"] = False
+                render_frame()
+                if state["path_to_draw"]:
+                    status.set(f"Re-planned cost={planner.g[goal]:.2f}")
+                else:
+                    status.set("Goal Blocked (No Path)")
+
+        def on_canvas_click(event) -> None:
+            if state["animating"]:
+                return
+
+            if event.xdata is None or event.ydata is None or event.inaxes != ax:
+                return
+
+            c = int(math.floor(event.xdata + 0.5))
+            r = int(math.floor(event.ydata + 0.5))
 
             if not (0 <= r < rows and 0 <= c < cols):
                 return
@@ -562,12 +603,25 @@ class LPAGUI:
             if planner.grid[r][c]:
                 planner.grid[r][c] = False
                 obstacle_set.discard((r, c))
+                status_text = f"Removed obstacle at ({r},{c})"
             else:
                 planner.grid[r][c] = True
                 obstacle_set.add((r, c))
+                status_text = f"Added obstacle at ({r},{c})"
+
+            expanded_nodes = []
+            original_pop = planner._pop_from_open
+
+            def custom_pop():
+                node, key = original_pop()
+                if node is not None:
+                    expanded_nodes.append(node)
+                return node, key
+
+            planner._pop_from_open = custom_pop
 
             affected = [(r, c)]
-            for dr, dc in [(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(-1,1),(1,-1),(1,1)]:
+            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
                 nr, nc = r + dr, c + dc
                 if 0 <= nr < rows and 0 <= nc < cols:
                     affected.append((nr, nc))
@@ -575,30 +629,26 @@ class LPAGUI:
             for cell in affected:
                 planner.update_vertex(cell)
             planner.compute_shortest_path()
+            planner._pop_from_open = original_pop
 
-            path = planner.current_path()
-            state["current_result"] = {"success": bool(path), "path": path}
-            state["display_result"] = state["current_result"]
-            state["current_start"] = start
+            new_path = planner.current_path()
+            state["animating"] = True
+            state["phase"] = "expand"
+            state["current_idx"] = 0
+            state["expanded_to_draw"] = expanded_nodes
+            state["path_to_draw"] = new_path
+            state["last_change"] = (r, c)
             state["steps"] += 1
-
             render_frame()
-            canvas.draw()
+            run_animation_step()
+            status.set(status_text)
 
-            if path:
-                status.set(f"({r},{c}) → cost {planner.g[goal]:.2f}  len {len(path)}")
-            else:
-                status.set(f"({r},{c}) → NO PATH")
+        canvas.mpl_connect("button_press_event", on_canvas_click)
 
-        # 3. Bind the click event to the canvas
-        tk_canvas = canvas.get_tk_widget()
-        tk_canvas.bind("<Button-1>", on_canvas_click)
-
-        # 4. Render the initial frame
         render_frame()
 
-        # 5. Handle window closing gracefully
-        def on_close():
+        def on_close() -> None:
+            plt.close(fig)
             window.destroy()
 
         window.protocol("WM_DELETE_WINDOW", on_close)
